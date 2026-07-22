@@ -20,9 +20,12 @@ jobs:
           set -euo pipefail
           python - <<'PY'
           from pathlib import Path, PurePosixPath
-          import base64, hashlib, io, lzma, os, shutil, tarfile
+          import base64, hashlib, io, os, shutil, tarfile
 
-          payload = Path('bootstrap/source.tar.xz.b64').read_text(encoding='ascii')
+          parts = sorted(Path('bootstrap').glob('part-*.txt'))
+          if not parts:
+              raise SystemExit('no archive parts found')
+          payload = ''.join(p.read_text(encoding='ascii') for p in parts)
           raw = base64.b64decode(payload, validate=True)
           expected = '3fe6f5922cd1a9823ef2d8a87794cdd8ae3d1314098a3b88a62c2e8c0a0b6624'
           actual = hashlib.sha256(raw).hexdigest()
@@ -38,10 +41,8 @@ jobs:
                   p = PurePosixPath(m.name)
                   if p.is_absolute() or '..' in p.parts or not p.parts:
                       raise SystemExit(f'unsafe path: {m.name}')
-                  if m.issym() or m.islnk() or m.isdev():
+                  if m.issym() or m.islnk() or m.isdev() or not m.isfile():
                       raise SystemExit(f'unsafe member type: {m.name}')
-                  if not m.isfile():
-                      raise SystemExit(f'unexpected member type: {m.name}')
                   if m.size > 5 * 1024 * 1024:
                       raise SystemExit(f'oversized member: {m.name}')
                   total += m.size
