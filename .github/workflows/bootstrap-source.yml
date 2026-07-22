@@ -2,74 +2,10 @@ name: bootstrap-source
 on:
   pull_request:
     branches: [main]
-    paths:
-      - bootstrap/READY
 permissions:
-  contents: write
-concurrency:
-  group: bootstrap-source
-  cancel-in-progress: false
+  contents: read
 jobs:
-  publish:
+  smoke:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-        with:
-          ref: ${{ github.head_ref }}
-          persist-credentials: true
-      - name: Expand validated source archive
-        shell: bash
-        run: |
-          set -euo pipefail
-          python - <<'PY'
-          from pathlib import Path, PurePosixPath
-          import base64, hashlib, io, os, shutil, tarfile
-
-          parts = sorted(Path('bootstrap').glob('part-*.txt'))
-          if not parts:
-              raise SystemExit('no archive parts found')
-          payload = ''.join(p.read_text(encoding='ascii') for p in parts)
-          raw = base64.b64decode(payload, validate=True)
-          expected = '3fe6f5922cd1a9823ef2d8a87794cdd8ae3d1314098a3b88a62c2e8c0a0b6624'
-          actual = hashlib.sha256(raw).hexdigest()
-          if actual != expected:
-              raise SystemExit(f'archive sha256 mismatch: {actual}')
-
-          with tarfile.open(fileobj=io.BytesIO(raw), mode='r:xz') as tf:
-              members = tf.getmembers()
-              if len(members) > 500:
-                  raise SystemExit('too many archive members')
-              total = 0
-              for m in members:
-                  p = PurePosixPath(m.name)
-                  if p.is_absolute() or '..' in p.parts or not p.parts:
-                      raise SystemExit(f'unsafe path: {m.name}')
-                  if m.issym() or m.islnk() or m.isdev() or not m.isfile():
-                      raise SystemExit(f'unsafe member type: {m.name}')
-                  if m.size > 5 * 1024 * 1024:
-                      raise SystemExit(f'oversized member: {m.name}')
-                  total += m.size
-              if total > 20 * 1024 * 1024:
-                  raise SystemExit('archive expands beyond limit')
-              for m in members:
-                  target = Path(*PurePosixPath(m.name).parts)
-                  target.parent.mkdir(parents=True, exist_ok=True)
-                  src = tf.extractfile(m)
-                  if src is None:
-                      raise SystemExit(f'could not read: {m.name}')
-                  target.write_bytes(src.read())
-                  os.chmod(target, m.mode & 0o777)
-
-          shutil.rmtree('bootstrap', ignore_errors=True)
-          Path('.github/workflows/bootstrap-source.yml').unlink(missing_ok=True)
-          PY
-      - name: Commit published source tree
-        shell: bash
-        run: |
-          set -euo pipefail
-          git config user.name "sentinel-forge-publisher"
-          git config user.email "actions@users.noreply.github.com"
-          git add -A
-          git diff --cached --check
-          git commit -m "Publish SRIC Core v0.3.0 source"
-          git push origin HEAD:${{ github.head_ref }}
+      - run: echo bootstrap-smoke-ok
