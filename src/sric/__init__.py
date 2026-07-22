@@ -3,4 +3,4 @@
 from .models import ClaimStatus, Confidence, EvidenceReference, FindingStatus
 
 __all__ = ["ClaimStatus", "Confidence", "EvidenceReference", "FindingStatus"]
-__version__ = "0.3.0"
+__version__ = "0.4.0"

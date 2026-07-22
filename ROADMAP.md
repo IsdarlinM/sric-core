@@ -1,20 +1,14 @@
 # Roadmap
 
-## Current — 0.3.x hardening
+## Current — 0.4.x hardening
 
-Implemented foundations include the temporal graph, evidence/provenance lineage, bounded/cancellable job engine with SSE events, explainable correlation rules, safe import preflight, research notebook/saved queries, read-only graph query language, permission-declared plugin broker, provider-neutral AI abstraction, external-data prompt boundary, explicit AI budget/preview, and signed-update verification.
+Implemented: Shared Ecosystem Workspace v2, Claim-Evidence Contract v2, Temporal Graph/query v2, declarative correlation contributions, Job DAG/resource budgets, Secret Vault abstraction, process-isolated plugin runner primitive, AI privacy/budget controls and versioned safety evals.
 
-Remaining hardening before 0.4:
-- OS-backed encrypted secret vault/keyring abstraction and evidence-retention encryption.
-- Durable database-backed multi-process job queue while preserving local-first single-user defaults.
-- Plugin isolation strategy for untrusted third-party code (out-of-process sandbox); in-process broker remains trusted-plugin only.
-- Stable versioned public Python/API SDK contracts and migration compatibility matrix.
-- Full backup/rollback orchestration around schema migrations and stable release trust-root bootstrap.
-
-## 0.4–0.8
-- Performance/large-graph virtualization primitives.
-- Richer correlation DSL and conformance datasets.
-- Optional collaboration primitives only after authentication/RBAC threat modeling.
+Next hardening:
+- database-backed multi-process job repository adapter while preserving local-first operation;
+- stronger OS sandbox profiles for third-party plugins beyond process isolation;
+- stable public SDK compatibility matrix and automatic migration rollback orchestration;
+- larger graph performance/virtualization benchmarks and collaboration/RBAC only after threat modeling.
 
 ## 1.0
 Stable schemas/API, audited security model, reproducible signed releases, documented support/deprecation policy and external conformance cases.

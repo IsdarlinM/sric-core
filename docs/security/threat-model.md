@@ -1,4 +1,4 @@
-# Threat Model v0.2
+# Threat Model v0.4
 
 ## Assets
 Evidence, secrets, scope rules, workspaces, plugin permissions, AI prompts, reports and update metadata.
@@ -8,7 +8,7 @@ Evidence, secrets, scope rules, workspaces, plugin permissions, AI prompts, repo
 - SSRF: scope evaluation supports resolved-IP checks and blocks private/special networks unless explicitly allowed.
 - Cross-workspace leakage: each workspace has separate DB/evidence directories.
 - Secret leakage: default redaction for Authorization/Cookie/API-key-like material before audit use.
-- Plugin compromise: declarative permissions; no plugin auto-execution in v0.2.
+- Plugin compromise: declarative permissions; permission-gated process isolation, artifact hash verification and no unrestricted executor access in v0.4.
 - Unauthorized Web API: non-loopback binding remains denied until authenticated TLS mode is implemented.
 - Supply-chain update tampering: signed canonical release manifest + SHA-256 artifact verification; insecure HTTP rejected.
 - Active-request abuse: shared global/per-host rate limiter; consumers must keep it in the executor gate path.

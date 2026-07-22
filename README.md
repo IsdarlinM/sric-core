@@ -2,14 +2,14 @@
 
 ```text
 SRIC CORE
-imr :: v0.3.0
+imr :: v0.4.0
 ```
 
 Shared evidence-native primitives for ReproSec, AuthTwin, FossilScope, TrustBoundary Mapper and Exposure DNA.
 
 > **AI proposes. Evidence proves. Humans control.**
 
-## Implemented in v0.3.0
+## Implemented in v0.4.0
 
 - Typed truth states: `OBSERVED`, `INFERRED`, `HYPOTHESIS`, `VALIDATED`, `REJECTED`, `UNKNOWN`.
 - Claim-Evidence Contract models with evidence and counter-evidence references.
@@ -33,6 +33,18 @@ Shared evidence-native primitives for ReproSec, AuthTwin, FossilScope, TrustBoun
 - Evidence Lineage API, reproducible Research Notebook, saved queries and explainable correlation rules.
 - Hostile import preflight for files/ZIPs and explicit untrusted-data prompt boundaries.
 - Role-separated Cartographer/Historian/Security Analyst/Validator/Skeptic/Evidence Agent/Orchestrator proposal primitives; no agent owns an unrestricted executor.
+
+
+- Shared Ecosystem Workspace v2 with stable workspace IDs, product namespaces, locking, migrations, backup/restore and integrity checks.
+- Claim-Evidence Contract v2 with guarded truth-state transitions, assumptions, alternative explanations, temporal validity and deterministic validation history.
+- Temporal Security Knowledge Graph v2 with evidence/counter-evidence, source independence, bounded path/history/diff/explain operations and strict read-only query planning.
+- Declarative Correlation Engine v2 with per-signal contribution, source independence, temporal relevance and missing-evidence reporting.
+- Job Engine v2 with DAG dependencies, retry/resource budgets, resumable metadata, artifacts and provenance.
+- Process-isolated plugin runner primitive with narrow JSON capability contract and OS resource limits where supported; no executor exposure.
+- Secret Vault abstraction preferring OS keyring and encrypted-file fallback; workspaces store only opaque secret references.
+- Versioned safety/AI eval runner covering injection, false ownership/auth, temporal confusion, counter-evidence, fake evidence, unsafe validation and scope expansion.
+- Collaboration-ready repository boundary keeps SQLite as the local default and enables explicit optional PostgreSQL configuration without remote connectivity by default.
+- Plugin artifact hash verification gates execution when a declared artifact hash does not match; signature metadata is not treated as trusted until a configured trust-root verifier validates it.
 
 ## Development install
 

@@ -13,6 +13,8 @@ from . import __version__
 from .graph import TemporalGraph
 from .jobs import JobEngine
 from .notebook import ResearchNotebook
+from .query import SecurityResearchGraphQuery
+from .workspace import Workspace
 
 
 def create_app(workspace: Path | None = None) -> FastAPI:
@@ -45,6 +47,26 @@ def create_app(workspace: Path | None = None) -> FastAPI:
         @app.get("/graph")
         async def graph_snapshot() -> dict[str, list[dict[str, Any]]]:
             return graph.snapshot()
+
+        @app.get("/graph/query")
+        async def graph_query(q: str) -> dict[str, Any]:
+            return SecurityResearchGraphQuery(graph).execute(q)
+
+        @app.get("/graph/explain/{object_id}")
+        async def graph_explain(object_id: str) -> dict[str, Any]:
+            return graph.explain(object_id)
+
+        @app.get("/graph/path")
+        async def graph_path(source: str, target: str, max_depth: int = 8) -> dict[str, Any]:
+            return graph.path(source, target, max_depth=max_depth)
+
+        @app.get("/workspace/integrity")
+        async def workspace_integrity() -> dict[str, object]:
+            return Workspace.open(workspace).integrity()
+
+        @app.get("/jobs/dag")
+        async def jobs_dag() -> dict[str, Any]:
+            return jobs.dag()
 
         @app.get("/search")
         async def search(q: str, limit: int = 50) -> list[dict[str, Any]]:

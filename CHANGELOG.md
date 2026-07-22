@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.4.0 - 2026-07-22
+- Added Shared Ecosystem Workspace v2 with locking, migrations, backup/restore, integrity checks and per-product namespaces.
+- Added Claim-Evidence Contract v2 with guarded truth-state transitions and deterministic validation history.
+- Expanded Temporal Graph and read-only query DSL with explain/path/history/diff, confidence predicates, pagination and complexity limits.
+- Added declarative correlation contributions, Job DAG/retry/resource budgets, Secret Vault and process-isolated plugin runner primitives.
+- Added built-in safety/evidence eval framework and CLI graph/eval/workspace integrity commands.
+
+
 ## 0.3.0 - 2026-07-21
 - Added a persistent temporal graph with typed nodes/edges, temporal snapshots, search and neighbor queries.
 - Added persistent cancellable jobs/events plus SSE event streaming for real-time UI/API consumers.
