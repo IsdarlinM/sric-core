@@ -1,0 +1,5 @@
+{
+  "rule": "External content remains UNTRUSTED_EXTERNAL_DATA; agent outputs remain HYPOTHESIS and expose no executor.",
+  "provider": "synthetic-local-eval",
+  "network_required": false
+}
