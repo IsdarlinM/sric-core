@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "sric-core"
-version = "0.4.0"
+version = "0.4.1"
 description = "Evidence-native shared core for security research intelligence tools."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -21,7 +21,14 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=8,<10", "httpx>=0.27,<1", "ruff>=0.9,<1", "mypy>=1.14,<2"]
+dev = [
+  "pytest>=8,<10",
+  "httpx>=0.27,<1",
+  "ruff>=0.9,<1",
+  "mypy>=1.14,<2",
+  "build>=1,<2",
+  "pip-audit>=2,<3",
+]
 
 [project.scripts]
 sric = "sric.cli_vnext:run"
