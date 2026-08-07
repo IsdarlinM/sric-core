@@ -1,16 +1,13 @@
 from __future__ import annotations
 
 from datetime import datetime
+from typing import Annotated, Literal
 
 from fastapi import APIRouter, FastAPI, HTTPException
 from pydantic import BaseModel, ConfigDict, Field
 
 from .api import create_app as create_base_app
-from .bitemporal import (
-    BitemporalRecord,
-    detect_temporal_conflicts,
-    select_bitemporal,
-)
+from .bitemporal import BitemporalRecord, detect_temporal_conflicts, select_bitemporal
 from .calibration import (
     ConfidenceSignal,
     brier_score,
@@ -22,12 +19,16 @@ from .merkle import EvidenceDigest, build_merkle_proof, evidence_merkle_root
 from .source_quality import SourceProfile, resolve_source_independence
 
 
+Probability = Annotated[float, Field(ge=0.0, le=1.0)]
+BinaryOutcome = Literal[0, 1]
+
+
 class ConfidenceAnalysisRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     signals: list[ConfidenceSignal]
     base_confidence: float = Field(default=0.0, ge=0.0, le=1.0)
-    maximum: float = Field(default=0.95, ge=0.0, le=1.0)
+    maximum: float = Field(default=0.95, gt=0.0, le=1.0)
     alternative_explanations: list[str] = Field(default_factory=list)
     counter_evidence_ids: list[str] = Field(default_factory=list)
     missing_required_evidence: list[str] = Field(default_factory=list)
@@ -36,8 +37,8 @@ class ConfidenceAnalysisRequest(BaseModel):
 class CalibrationMetricsRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    probabilities: list[float]
-    outcomes: list[int]
+    probabilities: list[Probability]
+    outcomes: list[BinaryOutcome]
     bins: int = Field(default=10, ge=2, le=100)
 
 
@@ -68,9 +69,7 @@ router = APIRouter(prefix="/api/v1/evidence-native", tags=["evidence-native"])
 
 
 @router.post("/confidence/analyze")
-async def confidence_analyze(
-    request: ConfidenceAnalysisRequest,
-) -> dict[str, object]:
+async def confidence_analyze(request: ConfidenceAnalysisRequest) -> dict[str, object]:
     breakdown = score_confidence(
         request.signals,
         base_confidence=request.base_confidence,
@@ -90,9 +89,7 @@ async def confidence_analyze(
 
 
 @router.post("/confidence/calibration")
-async def confidence_calibration(
-    request: CalibrationMetricsRequest,
-) -> dict[str, object]:
+async def confidence_calibration(request: CalibrationMetricsRequest) -> dict[str, object]:
     return {
         "brier_score": brier_score(request.probabilities, request.outcomes),
         "expected_calibration_error": expected_calibration_error(
@@ -126,11 +123,8 @@ async def bitemporal_query(request: BitemporalQueryRequest) -> dict[str, object]
 
 
 @router.post("/sources/independence")
-async def source_independence(
-    request: SourceIndependenceRequest,
-) -> dict[str, object]:
-    report = resolve_source_independence(request.sources)
-    return report.model_dump(mode="json")
+async def source_independence(request: SourceIndependenceRequest) -> dict[str, object]:
+    return resolve_source_independence(request.sources).model_dump(mode="json")
 
 
 @router.post("/integrity/merkle")
