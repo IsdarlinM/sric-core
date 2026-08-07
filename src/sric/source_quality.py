@@ -56,8 +56,7 @@ def _cycles(profiles: dict[str, SourceProfile]) -> list[list[str]]:
     def visit(source_id: str) -> None:
         if source_id in active:
             start = active.index(source_id)
-            cycle = active[start:] + [source_id]
-            canonical = cycle[:-1]
+            canonical = active[start:]
             if canonical:
                 smallest = min(range(len(canonical)), key=lambda index: canonical[index])
                 normalized = canonical[smallest:] + canonical[:smallest]
@@ -67,12 +66,12 @@ def _cycles(profiles: dict[str, SourceProfile]) -> list[list[str]]:
             return
         if source_id in visited:
             return
-        visited.add(source_id)
         active.append(source_id)
         for upstream in profiles[source_id].upstream_source_ids:
             if upstream in profiles:
                 visit(upstream)
         active.pop()
+        visited.add(source_id)
 
     for source_id in sorted(profiles):
         visit(source_id)
@@ -94,6 +93,13 @@ def resolve_source_independence(
         raise ValueError("source_id values must be unique")
 
     cycles = _cycles(profiles)
+    cycle_group_by_source: dict[str, str] = {}
+    for cycle in cycles:
+        members = sorted(set(cycle[:-1]))
+        group_id = "cycle:" + ":".join(members)
+        for member in members:
+            cycle_group_by_source[member] = group_id
+
     unresolved = {
         source_id: sorted(
             upstream
@@ -106,33 +112,30 @@ def resolve_source_independence(
 
     memo: dict[str, str] = {}
 
-    def group(source_id: str, stack: set[str]) -> str:
+    def group(source_id: str) -> str:
         if source_id in memo:
             return memo[source_id]
+        if source_id in cycle_group_by_source:
+            result = cycle_group_by_source[source_id]
+            memo[source_id] = result
+            return result
         profile = profiles[source_id]
-        if profile.declared_independence_group:
+        known_upstreams = [
+            upstream for upstream in profile.upstream_source_ids if upstream in profiles
+        ]
+        if known_upstreams:
+            upstream_groups = sorted({group(upstream) for upstream in known_upstreams})
+            result = "derived:" + "+".join(upstream_groups)
+        elif profile.declared_independence_group:
             result = f"declared:{profile.declared_independence_group}"
-        elif source_id in stack:
-            result = "cycle:" + ":".join(sorted(stack | {source_id}))
+        elif profile.independently_operated:
+            result = f"independent:{source_id}"
         else:
-            known_upstreams = [
-                upstream
-                for upstream in profile.upstream_source_ids
-                if upstream in profiles
-            ]
-            if known_upstreams:
-                upstream_groups = sorted(
-                    {group(upstream, stack | {source_id}) for upstream in known_upstreams}
-                )
-                result = "derived:" + "+".join(upstream_groups)
-            elif profile.independently_operated:
-                result = f"independent:{source_id}"
-            else:
-                result = f"unverified:{source_id}"
+            result = f"unverified:{source_id}"
         memo[source_id] = result
         return result
 
-    groups = {source_id: group(source_id, set()) for source_id in sorted(profiles)}
+    groups = {source_id: group(source_id) for source_id in sorted(profiles)}
     dependent = sorted(
         source_id
         for source_id, profile in profiles.items()
