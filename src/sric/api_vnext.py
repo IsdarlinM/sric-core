@@ -25,7 +25,6 @@ BinaryOutcome = Literal[0, 1]
 
 class ConfidenceAnalysisRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
-
     signals: list[ConfidenceSignal]
     base_confidence: float = Field(default=0.0, ge=0.0, le=1.0)
     maximum: float = Field(default=0.95, gt=0.0, le=1.0)
@@ -36,7 +35,6 @@ class ConfidenceAnalysisRequest(BaseModel):
 
 class CalibrationMetricsRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
-
     probabilities: list[Probability]
     outcomes: list[BinaryOutcome]
     bins: int = Field(default=10, ge=2, le=100)
@@ -44,7 +42,6 @@ class CalibrationMetricsRequest(BaseModel):
 
 class BitemporalQueryRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
-
     records: list[BitemporalRecord]
     valid_at: datetime
     known_at: datetime
@@ -54,13 +51,11 @@ class BitemporalQueryRequest(BaseModel):
 
 class SourceIndependenceRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
-
     sources: list[SourceProfile]
 
 
 class EvidenceMerkleRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
-
     evidence: list[EvidenceDigest]
     prove_evidence_id: str | None = None
 
@@ -90,31 +85,39 @@ async def confidence_analyze(request: ConfidenceAnalysisRequest) -> dict[str, ob
 
 @router.post("/confidence/calibration")
 async def confidence_calibration(request: CalibrationMetricsRequest) -> dict[str, object]:
-    return {
-        "brier_score": brier_score(request.probabilities, request.outcomes),
-        "expected_calibration_error": expected_calibration_error(
+    try:
+        brier = brier_score(request.probabilities, request.outcomes)
+        ece = expected_calibration_error(
             request.probabilities,
             request.outcomes,
             bins=request.bins,
-        ),
+        )
+    except ValueError as exc:
+        raise HTTPException(422, str(exc)) from exc
+    return {
+        "brier_score": brier,
+        "expected_calibration_error": ece,
         "sample_count": len(request.probabilities),
     }
 
 
 @router.post("/bitemporal/query")
 async def bitemporal_query(request: BitemporalQueryRequest) -> dict[str, object]:
-    selected = select_bitemporal(
-        request.records,
-        valid_at=request.valid_at,
-        known_at=request.known_at,
-        entity_id=request.entity_id,
-        fact_type=request.fact_type,
-    )
-    conflicts = detect_temporal_conflicts(
-        request.records,
-        valid_at=request.valid_at,
-        known_at=request.known_at,
-    )
+    try:
+        selected = select_bitemporal(
+            request.records,
+            valid_at=request.valid_at,
+            known_at=request.known_at,
+            entity_id=request.entity_id,
+            fact_type=request.fact_type,
+        )
+        conflicts = detect_temporal_conflicts(
+            request.records,
+            valid_at=request.valid_at,
+            known_at=request.known_at,
+        )
+    except ValueError as exc:
+        raise HTTPException(422, str(exc)) from exc
     return {
         "records": [item.model_dump(mode="json") for item in selected],
         "conflicts": [item.model_dump(mode="json") for item in conflicts],
