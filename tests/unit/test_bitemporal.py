@@ -20,7 +20,7 @@ T3 = T2 + timedelta(days=10)
 
 def record(
     record_id: str,
-    value: str,
+    value: object,
     *,
     valid_from: datetime = T0,
     valid_to: datetime | None = None,
@@ -44,7 +44,6 @@ def record(
 
 def test_valid_time_and_knowledge_time_are_distinct() -> None:
     item = record("R-1", "org-a", valid_from=T0, recorded_at=T2)
-
     assert item.bounds.valid_at(T1) is True
     assert item.bounds.known_at(T1) is False
     assert item.visible_at(valid_at=T1, known_at=T3) is True
@@ -53,15 +52,12 @@ def test_valid_time_and_knowledge_time_are_distinct() -> None:
 def test_query_does_not_use_future_knowledge() -> None:
     old = record("R-OLD", "org-a", recorded_at=T1)
     new = record("R-NEW", "org-b", recorded_at=T3)
-
     selected = select_bitemporal([old, new], valid_at=T2, known_at=T2)
-
     assert [item.record_id for item in selected] == ["R-OLD"]
 
 
 def test_superseded_record_disappears_from_later_knowledge_view() -> None:
     old = supersede_record(record("R-OLD", "org-a"), superseded_at=T2)
-
     assert old.bounds.known_at(T1) is True
     assert old.bounds.known_at(T3) is False
 
@@ -72,10 +68,18 @@ def test_conflicting_visible_facts_are_reported() -> None:
         valid_at=T2,
         known_at=T2,
     )
-
     assert len(conflicts) == 1
     assert conflicts[0].record_ids == ["R-1", "R-2"]
     assert "remain UNKNOWN" in conflicts[0].reason
+
+
+def test_semantically_equal_json_values_do_not_conflict_by_key_order() -> None:
+    conflicts = detect_temporal_conflicts(
+        [record("R-1", {"a": 1, "b": 2}), record("R-2", {"b": 2, "a": 1})],
+        valid_at=T2,
+        known_at=T2,
+    )
+    assert conflicts == []
 
 
 def test_non_overlapping_validity_does_not_conflict() -> None:
@@ -87,7 +91,6 @@ def test_non_overlapping_validity_does_not_conflict() -> None:
         valid_at=T2,
         known_at=T2,
     )
-
     assert conflicts == []
 
 
