@@ -82,14 +82,15 @@ def _cycles(profiles: dict[str, SourceProfile]) -> list[list[str]]:
 def resolve_source_independence(
     source_profiles: Iterable[SourceProfile],
 ) -> SourceIndependenceReport:
-    profiles = {profile.source_id: profile for profile in source_profiles}
+    profile_list = list(source_profiles)
+    profiles = {profile.source_id: profile for profile in profile_list}
     if not profiles:
         return SourceIndependenceReport(
             source_groups={},
             independent_group_count=0,
             limitations=["No source profiles were supplied."],
         )
-    if len(profiles) != len(list(source_profiles)):
+    if len(profiles) != len(profile_list):
         raise ValueError("source_id values must be unique")
 
     cycles = _cycles(profiles)
