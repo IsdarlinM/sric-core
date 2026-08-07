@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from datetime import datetime, timezone
 from typing import Any, Iterable
 
@@ -16,6 +17,26 @@ def _aware(value: datetime, field: str) -> datetime:
     if value.tzinfo is None or value.utcoffset() is None:
         raise ValueError(f"{field} must be timezone-aware")
     return value
+
+
+def _canonical_value(value: Any) -> str:
+    """Return a deterministic representation for conflict comparison."""
+    try:
+        return json.dumps(
+            value,
+            sort_keys=True,
+            separators=(",", ":"),
+            ensure_ascii=False,
+            allow_nan=False,
+        )
+    except (TypeError, ValueError):
+        type_name = f"{type(value).__module__}.{type(value).__qualname__}"
+        return json.dumps(
+            {"__type__": type_name, "__repr__": repr(value)},
+            sort_keys=True,
+            separators=(",", ":"),
+            ensure_ascii=False,
+        )
 
 
 class BitemporalBounds(BaseModel):
@@ -127,7 +148,7 @@ def detect_temporal_conflicts(
 
     conflicts: list[TemporalConflict] = []
     for (entity_id, fact_type), values in groups.items():
-        canonical_values = {repr(item.value) for item in values}
+        canonical_values = {_canonical_value(item.value) for item in values}
         if len(canonical_values) <= 1:
             continue
         conflicts.append(
