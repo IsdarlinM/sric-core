@@ -1,7 +1,39 @@
-# CI and private SRIC dependency
+# Local release validation
 
-All workflows run with `contents: read`, pinned GitHub Action commit SHAs, `persist-credentials: false`, tests, static checks, a local high-confidence security scan, SBOM generation, package build, Bandit SAST and pip-audit dependency scanning.
+Sentinel Forge does not depend on GitHub Actions or another hosted CI service. Every repository ships a local, cross-platform release gate at `scripts/release-gate.py`.
 
-For repositories that depend on the private `sric-core` repository, configure a repository secret named `SRIC_READ_TOKEN` containing a fine-grained GitHub token with **read-only Contents access to `sric-core` only**. Do not grant write, Actions, administration, or organization-wide permissions. Rotate the token and prefer an organization/repository-scoped GitHub App when the repositories become public or organizational governance is introduced.
+Run the complete gate from an isolated development environment:
 
-CI never receives production secrets, target credentials, capsules, or workspace data.
+```bash
+python -m pip install -e '.[dev]'
+python scripts/release-gate.py
+```
+
+For an offline smoke test that installs the built wheel without resolving dependencies:
+
+```bash
+python scripts/release-gate.py --offline
+```
+
+A fast developer pass is available, but it is not sufficient for a release:
+
+```bash
+python scripts/release-gate.py --quick
+```
+
+The full gate performs:
+
+- Python compilation;
+- Ruff and strict mypy;
+- unit, integration, security and E2E pytest suites;
+- project security scan and safety/AI evaluations when present;
+- dependency audit with `pip-audit`;
+- SBOM generation when supported by the repository;
+- wheel and source-distribution build;
+- isolated wheel installation;
+- root CLI `--help` and `-h` smoke tests;
+- SHA-256 hashes for generated release artifacts.
+
+The machine-readable result is written to `build/release-evidence/release-gate.json`. A release must not be announced when its status is `FAIL`, when required tools are missing, or when the report does not correspond to the exact source commit being released.
+
+No production secrets, target credentials, capsules or workspace data are required by the release gate.

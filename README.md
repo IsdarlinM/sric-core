@@ -2,49 +2,48 @@
 
 ```text
 SRIC CORE
-imr :: v0.4.0
+imr :: v0.4.1
 ```
 
 Shared evidence-native primitives for ReproSec, AuthTwin, FossilScope, TrustBoundary Mapper and Exposure DNA.
 
 > **AI proposes. Evidence proves. Humans control.**
 
-## Implemented in v0.4.0
+## Implemented
 
 - Typed truth states: `OBSERVED`, `INFERRED`, `HYPOTHESIS`, `VALIDATED`, `REJECTED`, `UNKNOWN`.
-- Claim-Evidence Contract models with evidence and counter-evidence references.
+- Claim-Evidence Contract v2 with evidence, counter-evidence, assumptions, alternative explanations, temporal validity and deterministic validation history.
 - Content-addressed evidence store with SHA-256 integrity checks and size limits.
 - Scope Engine with allow/deny rules, method policy, redirect revalidation and private/special-network SSRF controls.
 - Deterministic Policy Engine with action classes and separate preflight/human approval semantics.
 - Conservative HTTP action classifier: GET/HEAD are not automatically safe; DELETE is destructive by default.
 - Shared global/per-host active-request rate limiter.
-- Structured redaction primitives for headers/text, query parameters, JSON and form-urlencoded data.
+- Structured redaction for headers/text, query parameters, JSON and form-urlencoded data.
 - Audit logging with query-secret redaction.
-- Provider-neutral AI abstraction; AI disabled by default and unable to bypass Scope/Policy.
-- Plugin manifest/type/permission model; plugins are not auto-executed.
-- SQLite/SQLAlchemy storage foundation with Alembic migration baseline.
-- Isolated workspaces.
-- Local FastAPI health API with restrictive security headers.
-- CLI with doctor, workspaces, plugins, AI status, scope checks, signed-release updater, local API and version.
-- Signed Ed25519/SHA-256 wheel update primitive; HTTP manifests are rejected and blind production `git pull` is not used.
-
-- Persistent local-first Temporal Graph with temporal snapshots, search and typed evidence-bearing relationships.
-- Persistent cancellable Job/Event Engine with SSE event streaming for real-time consumers.
-- Evidence Lineage API, reproducible Research Notebook, saved queries and explainable correlation rules.
+- Provider-neutral AI abstraction; AI is disabled by default and cannot bypass Scope or Policy.
+- Plugin manifest/type/permission model with process isolation and artifact-hash verification primitives.
+- SQLite/SQLAlchemy storage foundation with Alembic migration baseline and optional explicit PostgreSQL configuration.
+- Shared Ecosystem Workspace v2 with stable IDs, namespaces, locking, migrations, backup/restore and integrity checks.
+- Temporal Security Knowledge Graph v2 with evidence-bearing relationships and bounded read-only queries.
+- Persistent cancellable Job/Event Engine with DAG dependencies, budgets, resumable metadata and SSE events.
+- Evidence Lineage API, reproducible Research Notebook and saved queries.
 - Hostile import preflight for files/ZIPs and explicit untrusted-data prompt boundaries.
-- Role-separated Cartographer/Historian/Security Analyst/Validator/Skeptic/Evidence Agent/Orchestrator proposal primitives; no agent owns an unrestricted executor.
+- Role-separated Cartographer, Historian, Security Analyst, Validator, Skeptic, Evidence Agent and Orchestrator proposal primitives.
+- Secret Vault abstraction preferring OS keyring and encrypted-file fallback.
+- Versioned safety/AI eval runner covering prompt injection, false ownership/auth, temporal confusion, fake evidence, unsafe validation and scope expansion.
+- Signed Ed25519/SHA-256 wheel update primitive; HTTP manifests and blind production `git pull` are rejected.
 
+## Precision and false-positive controls in v0.4.1
 
-- Shared Ecosystem Workspace v2 with stable workspace IDs, product namespaces, locking, migrations, backup/restore and integrity checks.
-- Claim-Evidence Contract v2 with guarded truth-state transitions, assumptions, alternative explanations, temporal validity and deterministic validation history.
-- Temporal Security Knowledge Graph v2 with evidence/counter-evidence, source independence, bounded path/history/diff/explain operations and strict read-only query planning.
-- Declarative Correlation Engine v2 with per-signal contribution, source independence, temporal relevance and missing-evidence reporting.
-- Job Engine v2 with DAG dependencies, retry/resource budgets, resumable metadata, artifacts and provenance.
-- Process-isolated plugin runner primitive with narrow JSON capability contract and OS resource limits where supported; no executor exposure.
-- Secret Vault abstraction preferring OS keyring and encrypted-file fallback; workspaces store only opaque secret references.
-- Versioned safety/AI eval runner covering injection, false ownership/auth, temporal confusion, counter-evidence, fake evidence, unsafe validation and scope expansion.
-- Collaboration-ready repository boundary keeps SQLite as the local default and enables explicit optional PostgreSQL configuration without remote connectivity by default.
-- Plugin artifact hash verification gates execution when a declared artifact hash does not match; signature metadata is not treated as trusted until a configured trust-root verifier validates it.
+SRIC now exposes shared confidence-calibration primitives for all Sentinel Forge products:
+
+- source-group deduplication prevents mirrors and derived feeds from inflating confidence;
+- temporal half-life discounts stale observations;
+- direct/derived evidence, source quality and signal specificity are explicit;
+- missing required evidence lowers confidence and forces Skeptic abstention;
+- counter-evidence and alternative explanations can reduce or reject a candidate;
+- confidence remains advisory and cannot create a `VALIDATED` finding;
+- Brier score and Expected Calibration Error support measurable evaluation datasets.
 
 ## Development install
 
@@ -52,8 +51,24 @@ Shared evidence-native primitives for ReproSec, AuthTwin, FossilScope, TrustBoun
 python -m venv .venv
 . .venv/bin/activate  # Windows: .venv\Scripts\activate
 python -m pip install -e '.[dev]'
-pytest
+python -m pytest
 sric doctor
+```
+
+## Local release gate
+
+This repository does not depend on hosted CI. Run the complete cross-platform release gate locally:
+
+```bash
+python scripts/release-gate.py
+```
+
+It runs compile checks, Ruff, strict mypy, pytest, security scans, safety evals, dependency audit, SBOM generation, package build, isolated wheel installation and CLI help smoke tests. Machine-readable evidence is written to `build/release-evidence/release-gate.json`.
+
+A quicker non-release pass is available with:
+
+```bash
+python scripts/release-gate.py --quick
 ```
 
 ## Safety defaults
