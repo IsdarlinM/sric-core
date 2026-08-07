@@ -40,7 +40,7 @@ def test_confidence_api_rejects_zero_maximum_at_validation_boundary() -> None:
     assert response.status_code == 422
 
 
-def test_calibration_api_rejects_non_binary_outcomes_and_invalid_probabilities() -> None:
+def test_calibration_api_rejects_invalid_domains_empty_or_mismatched_samples() -> None:
     client = TestClient(create_app())
     assert client.post(
         "/api/v1/evidence-native/confidence/calibration",
@@ -49,6 +49,14 @@ def test_calibration_api_rejects_non_binary_outcomes_and_invalid_probabilities()
     assert client.post(
         "/api/v1/evidence-native/confidence/calibration",
         json={"probabilities": [1.5], "outcomes": [1]},
+    ).status_code == 422
+    assert client.post(
+        "/api/v1/evidence-native/confidence/calibration",
+        json={"probabilities": [], "outcomes": []},
+    ).status_code == 422
+    assert client.post(
+        "/api/v1/evidence-native/confidence/calibration",
+        json={"probabilities": [0.8], "outcomes": [1, 0]},
     ).status_code == 422
 
 
@@ -93,6 +101,19 @@ def test_bitemporal_api_does_not_use_future_knowledge() -> None:
     payload = response.json()
     assert [item["record_id"] for item in payload["records"]] == ["R-OLD"]
     assert payload["future_knowledge_used"] is False
+
+
+def test_bitemporal_api_naive_query_time_is_controlled_422() -> None:
+    client = TestClient(create_app())
+    response = client.post(
+        "/api/v1/evidence-native/bitemporal/query",
+        json={
+            "valid_at": "2026-01-15T00:00:00",
+            "known_at": "2026-01-15T00:00:00Z",
+            "records": [],
+        },
+    )
+    assert response.status_code == 422
 
 
 def test_source_api_collapses_mirrors_by_upstream() -> None:
