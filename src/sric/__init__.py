@@ -18,6 +18,7 @@ from .calibration import (
     score_confidence,
     skeptic_review,
 )
+from .exports import ExportEdge, ExportNode, export_graphml, export_jsonld
 from .merkle import (
     EvidenceDigest,
     MerkleProof,
@@ -29,6 +30,13 @@ from .merkle import (
     verify_merkle_proof,
 )
 from .models import ClaimStatus, Confidence, EvidenceReference, FindingStatus
+from .sdk import (
+    CompatibilityStatus,
+    SDKCompatibilityReport,
+    SDKManifest,
+    check_sdk_compatibility,
+    semantic_version,
+)
 from .source_quality import (
     SourceAuthority,
     SourceIndependenceReport,
@@ -40,15 +48,20 @@ __all__ = [
     "BitemporalBounds",
     "BitemporalRecord",
     "ClaimStatus",
+    "CompatibilityStatus",
     "Confidence",
     "ConfidenceBreakdown",
     "ConfidenceSignal",
     "EvidenceDigest",
     "EvidenceReference",
+    "ExportEdge",
+    "ExportNode",
     "FindingStatus",
     "MerkleProof",
     "MerkleProofStep",
     "ProofSide",
+    "SDKCompatibilityReport",
+    "SDKManifest",
     "SkepticReview",
     "SkepticVerdict",
     "SourceAuthority",
@@ -57,13 +70,17 @@ __all__ = [
     "TemporalConflict",
     "brier_score",
     "build_merkle_proof",
+    "check_sdk_compatibility",
     "detect_temporal_conflicts",
     "evidence_merkle_root",
     "expected_calibration_error",
+    "export_graphml",
+    "export_jsonld",
     "merkle_root",
     "resolve_source_independence",
     "score_confidence",
     "select_bitemporal",
+    "semantic_version",
     "skeptic_review",
     "supersede_record",
     "verify_merkle_proof",
