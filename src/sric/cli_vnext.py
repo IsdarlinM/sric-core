@@ -7,8 +7,10 @@ from pathlib import Path
 from typing import Optional
 
 import typer
+from pydantic import ValidationError
 
 from . import cli as base
+from .api_vnext import create_app as create_vnext_app
 from .claims import ClaimContract, transition_claim
 from .evals import BUILTIN_CASES, EvalRunner
 from .graph import TemporalGraph
@@ -16,6 +18,8 @@ from .models import ClaimStatus
 from .query import GraphQueryError, SecurityResearchGraphQuery
 from .vault import SecretVault
 from .workspace import Workspace
+
+base.create_app = create_vnext_app
 
 app = base.app
 workspace_app = base.workspace_app
@@ -191,8 +195,8 @@ def claim_transition(
     evidence: list[str] = typer.Option([], "--evidence"),
     deterministic: bool = typer.Option(False, "--deterministic"),
 ) -> None:
-    claim = ClaimContract.model_validate_json(path.read_text(encoding="utf-8"))
     try:
+        claim = ClaimContract.model_validate_json(path.read_text(encoding="utf-8"))
         updated = transition_claim(
             claim,
             status,
@@ -200,10 +204,10 @@ def claim_transition(
             evidence_ids=evidence,
             deterministic=deterministic,
         )
-    except ValueError as exc:
-        typer.echo(str(exc), err=True)
+        path.write_text(updated.model_dump_json(indent=2), encoding="utf-8")
+    except (OSError, ValidationError, ValueError) as exc:
+        typer.echo(f"claim transition failed: {exc}", err=True)
         raise typer.Exit(2) from exc
-    path.write_text(updated.model_dump_json(indent=2), encoding="utf-8")
     typer.echo(updated.model_dump_json(indent=2))
 
 
