@@ -24,9 +24,8 @@ jobs:
           cache: pip
       - run: python -m pip install --upgrade pip
       - run: python -m pip install -e ".[dev]"
-      - run: python -m pytest tests/unit/test_capabilities_v05.py tests/integration/test_capabilities_api_v05.py tests/e2e/test_capabilities_cli_v05.py -q
+      - run: python -m sric.standalone_gate --root .
       - run: python scripts/release-gate.py --quick
-      - run: sric capabilities
 
   full-release-gate:
     runs-on: ubuntu-latest
@@ -40,6 +39,7 @@ jobs:
           cache: pip
       - run: python -m pip install --upgrade pip
       - run: python -m pip install -e ".[dev]"
+      - run: python -m sric.standalone_gate --root .
       - run: python scripts/release-gate.py
       - uses: actions/upload-artifact@v4
         if: always()
