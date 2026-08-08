@@ -1,58 +1,44 @@
-# Test Evidence — SRIC Core v0.4.1
+# Test Evidence — SRIC Core v0.5.0 Release Candidate
 
-## QA pass — 2026-08-07
+## Release-candidate review — 2026-08-08
 
-Current source changes were audited through the authenticated GitHub connector and the high-risk changed modules were reconstructed in the local runtime.
+The `agent/release-0.5.0` branch contains the SRIC 0.5 contract changes under review:
 
-Freshly executed in this QA pass:
+- `SentinelCase`, evidence-linked case artifacts and validation recipes;
+- deterministic cross-tool claim fingerprints and evidence-adequacy measurement;
+- automated correlation restricted by type to `INFERRED` / `HYPOTHESIS`;
+- release evidence bound to Git commit SHA, tree SHA and dirty state when available;
+- coordinated ecosystem smoke and local internal wheelhouse support;
+- new unit regressions for case/evidence safety and correlation truth-state restrictions.
 
-- targeted SRIC unit regression matrix for bitemporal evidence, confidence/Skeptic calibration, source independence, Merkle integrity and SDK/interchange logic: **15 passed**;
-- Python `compileall` over the reconstructed corrected modules: **PASS**;
-- cross-product Sentinel Forge high-risk regression matrix: **7 passed** across ReproSec, AuthTwin, FossilScope, TrustBoundary and Exposure DNA;
-- branch comparison against `main`: branch is ahead and **0 commits behind** at the time of this audit.
+## Fresh execution status
 
-Additional regression tests were added for:
+**THE COMPLETE v0.5.0 RELEASE GATE HAS NOT BEEN EXECUTED SUCCESSFULLY FOR THIS BRANCH.**
 
-- canonical bitemporal comparisons;
-- reserved JSON-LD fields and duplicate graph IDs;
-- dependency cycles overriding declared source independence;
-- API input-domain and controlled 4xx error handling;
-- every registered CLI help path through the real vNext entrypoint;
-- `sric web` serving the same vNext API that exposes evidence-native routes;
-- CLI claim-transition errors returning controlled exit codes instead of tracebacks.
+This runtime can read and modify the private repository through the authenticated GitHub connector, but it cannot materialize the private repository as a local checkout. The local environment also has no authenticated `gh` checkout path.
 
-## Current release-gate status
+GitHub Actions workflows were added, but observed workflow runs currently terminate with GitHub `startup_failure` before creating any job or check-run. Historical pre-0.5 workflow runs in this repository show the same zero-job startup failure, so this is recorded as an execution-infrastructure blocker rather than a test PASS or FAIL.
 
-**FULL LOCAL RELEASE GATE NOT EXECUTABLE IN THIS RUNTIME.**
+No v0.5.0 test, build, installer or release result is claimed from those failed-to-start workflow runs.
 
-The repositories are private and the runtime cannot resolve or connect to `github.com` / `raw.githubusercontent.com`, so a complete checkout cannot be materialized outside the GitHub connector. The connector exposes individual blobs but not a mountable repository archive. Therefore the complete current `pytest` tree, build/install smoke and every unchanged historical test cannot honestly be reported as freshly executed here.
+## Required release evidence
 
-The following release tools are also unavailable in the runtime and cannot be installed from its package index:
-
-- Ruff;
-- mypy;
-- `build`;
-- `pip-audit`.
-
-No GitHub Actions, Codespaces or other hosted/paid GitHub execution was used.
-
-Do not describe v0.4.1 as a fully validated release until the exact commit produces `PASS` from a complete sibling checkout using:
+From a directory containing all six sibling repositories at their exact 0.5 candidate commits, run:
 
 ```bash
-python -m pip install -e '.[dev]'
-python scripts/release-gate.py
-python scripts/release-ecosystem.py --root ..
+python -m pip install build pip-audit pytest ruff mypy hypothesis
+python sric-core/scripts/release-ecosystem.py --root .
 ```
 
-## Previous validated baseline
+The ecosystem gate builds a local wheelhouse for all six unreleased 0.5 packages, runs each repository release gate, checks internal dependency compatibility and executes the deterministic cross-product contract smoke.
 
-The previous v0.4.0 source state was recorded on 2026-07-22 with:
+Do not merge/tag a Sentinel Forge 0.5 release until:
 
-- pytest: **57 passed**;
-- compileall: **PASS**;
-- security scan: **PASS**;
-- CLI help coverage: **PASS** for 43 registered command paths;
-- synthetic/local functional smoke: **PASS**;
-- wheel build and isolated wheel smoke against the then-validated runtime dependency layer: **PASS**.
+- every repository `build/release-evidence/release-gate.json` reports `PASS`;
+- `sric-core/build/release-evidence/ecosystem-release-gate.json` reports `PASS`;
+- the reports identify the exact commit/tree under release;
+- clean-install/update/platform and other release requirements are supported by evidence rather than assumption.
 
-Those historical results apply only to the previous v0.4.0 state. They are a regression baseline, not proof of v0.4.1.
+## Historical regression baseline
+
+Previous 2026-08-07 targeted QA and the older v0.4.0 validated baseline remain available in Git history. They are regression context only and are not evidence that v0.5.0 passed.
