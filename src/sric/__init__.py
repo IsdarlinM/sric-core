@@ -18,6 +18,16 @@ from .calibration import (
     score_confidence,
     skeptic_review,
 )
+from .cases import (
+    CaseArtifact,
+    CaseArtifactType,
+    CaseMaturity,
+    SentinelCase,
+    ValidationRecipe,
+    claim_fingerprint,
+    evidence_adequacy,
+)
+from .correlation import AutomatedCorrelationStatus
 from .exports import ExportEdge, ExportNode, export_graphml, export_jsonld
 from .merkle import (
     EvidenceDigest,
@@ -45,8 +55,12 @@ from .source_quality import (
 )
 
 __all__ = [
+    "AutomatedCorrelationStatus",
     "BitemporalBounds",
     "BitemporalRecord",
+    "CaseArtifact",
+    "CaseArtifactType",
+    "CaseMaturity",
     "ClaimStatus",
     "CompatibilityStatus",
     "Confidence",
@@ -62,16 +76,20 @@ __all__ = [
     "ProofSide",
     "SDKCompatibilityReport",
     "SDKManifest",
+    "SentinelCase",
     "SkepticReview",
     "SkepticVerdict",
     "SourceAuthority",
     "SourceIndependenceReport",
     "SourceProfile",
     "TemporalConflict",
+    "ValidationRecipe",
     "brier_score",
     "build_merkle_proof",
     "check_sdk_compatibility",
+    "claim_fingerprint",
     "detect_temporal_conflicts",
+    "evidence_adequacy",
     "evidence_merkle_root",
     "expected_calibration_error",
     "export_graphml",
@@ -85,4 +103,4 @@ __all__ = [
     "supersede_record",
     "verify_merkle_proof",
 ]
-__version__ = "0.4.1"
+__version__ = "0.5.0"
