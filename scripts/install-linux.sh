@@ -9,6 +9,7 @@ BIN_DIR="${HOME}/.local/bin"
 SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 REPO_ROOT=$(CDPATH= cd -- "$SCRIPT_DIR/.." && pwd)
 CONSTRAINTS="$REPO_ROOT/requirements/runtime-py311.lock"
+FIRST_PARTY="$REPO_ROOT/requirements/first-party.txt"
 
 if [ "$(id -u)" = "0" ] && [ "${ALLOW_ROOT_INSTALL:-0}" != "1" ]; then
   echo "Refusing root install by default. Run as your normal user or set ALLOW_ROOT_INSTALL=1 intentionally." >&2
@@ -27,6 +28,12 @@ if [ ! -x "$VENV/bin/python" ]; then
 fi
 "$VENV/bin/python" -m pip install --upgrade pip
 
+if [ -f "$FIRST_PARTY" ]; then
+  "$VENV/bin/python" -m pip install --upgrade -r "$FIRST_PARTY" || {
+    echo "Failed to install Sentinel Forge first-party dependencies." >&2
+    exit 3
+  }
+fi
 "$VENV/bin/python" -m pip install --upgrade -c "$CONSTRAINTS" "$REPO_ROOT"
 ln -sfn "$VENV/bin/$CMD" "$BIN_DIR/$CMD"
 
