@@ -27,6 +27,39 @@ jobs:
       - run: python -m sric.standalone_gate --root .
       - run: python scripts/release-gate.py --quick
 
+  installer-smoke:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Linux install/uninstall preservation smoke
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          TEST_HOME="${RUNNER_TEMP}/sric-home"
+          mkdir -p "$TEST_HOME"
+          HOME="$TEST_HOME" sh scripts/install-linux.sh
+          "$TEST_HOME/.local/share/sric/venv/bin/sric" workspace create preserve
+          HOME="$TEST_HOME" sh scripts/uninstall-linux.sh
+          test -f "$TEST_HOME/.sric/workspaces/preserve/workspace.json"
+      - name: Windows clean installer smoke
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $env:USERPROFILE = Join-Path $env:RUNNER_TEMP 'sric-home'
+          $env:LOCALAPPDATA = Join-Path $env:USERPROFILE 'AppData\Local'
+          New-Item -ItemType Directory -Force -Path $env:LOCALAPPDATA | Out-Null
+          cmd /c scripts\install-windows.cmd
+          & "$env:LOCALAPPDATA\SRIC\venv\Scripts\sric.exe" version
+          & "$env:LOCALAPPDATA\SRIC\venv\Scripts\sric.exe" doctor
+          & "$env:LOCALAPPDATA\SRIC\venv\Scripts\sric.exe" capabilities
+
   full-release-gate:
     runs-on: ubuntu-latest
     steps:
