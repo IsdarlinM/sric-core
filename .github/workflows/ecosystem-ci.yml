@@ -5,12 +5,16 @@ on:
   pull_request:
     paths:
       - "scripts/release-ecosystem.py"
+      - "scripts/release-standalone-ecosystem.py"
       - "scripts/ecosystem-smoke.py"
       - "src/sric/**"
       - "pyproject.toml"
 
 permissions:
   contents: read
+
+env:
+  SENTINEL_REF: ${{ github.head_ref || github.ref_name }}
 
 jobs:
   release-train:
@@ -25,37 +29,37 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: IsdarlinM/sric-core
-          ref: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref_name }}
+          ref: ${{ env.SENTINEL_REF }}
           path: sentinel/sric-core
           token: ${{ secrets.SENTINEL_FORGE_CI_TOKEN }}
       - uses: actions/checkout@v4
         with:
           repository: IsdarlinM/reprosec
-          ref: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref_name }}
+          ref: ${{ env.SENTINEL_REF }}
           path: sentinel/reprosec
           token: ${{ secrets.SENTINEL_FORGE_CI_TOKEN }}
       - uses: actions/checkout@v4
         with:
           repository: IsdarlinM/authtwin
-          ref: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref_name }}
+          ref: ${{ env.SENTINEL_REF }}
           path: sentinel/authtwin
           token: ${{ secrets.SENTINEL_FORGE_CI_TOKEN }}
       - uses: actions/checkout@v4
         with:
           repository: IsdarlinM/fossilscope
-          ref: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref_name }}
+          ref: ${{ env.SENTINEL_REF }}
           path: sentinel/fossilscope
           token: ${{ secrets.SENTINEL_FORGE_CI_TOKEN }}
       - uses: actions/checkout@v4
         with:
           repository: IsdarlinM/trustboundary
-          ref: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref_name }}
+          ref: ${{ env.SENTINEL_REF }}
           path: sentinel/trustboundary
           token: ${{ secrets.SENTINEL_FORGE_CI_TOKEN }}
       - uses: actions/checkout@v4
         with:
           repository: IsdarlinM/exposuredna
-          ref: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref_name }}
+          ref: ${{ env.SENTINEL_REF }}
           path: sentinel/exposuredna
           token: ${{ secrets.SENTINEL_FORGE_CI_TOKEN }}
 
@@ -75,7 +79,10 @@ jobs:
           python -m pip install -e sentinel/trustboundary --no-deps
           python -m pip install -e sentinel/exposuredna --no-deps
 
-      - name: Run complete 0.5 release train
+      - name: Prove every product works standalone
+        run: python sentinel/sric-core/scripts/release-standalone-ecosystem.py --root sentinel
+
+      - name: Run integrated 0.5 release train
         run: python sentinel/sric-core/scripts/release-ecosystem.py --root sentinel
 
       - uses: actions/upload-artifact@v4
