@@ -18,28 +18,39 @@ class CLIBrand:
     product: str
     description: str
     version: str
-    signature: str = "IsdarlinM"
+    developer: str = "IsdarlinM"
 
     @property
-    def signature_line(self) -> str:
-        return f"{self.signature} :: v{self.version}"
+    def product_line(self) -> str:
+        return f"{self.product} :: v{self.version}"
+
+    @property
+    def developer_line(self) -> str:
+        return f"Developer: {self.developer}"
 
 
 def build_banner(brand: CLIBrand, *, width: int = 76) -> str:
-    """Build a portable ASCII banner without ANSI escape sequences."""
+    """Build the canonical portable Sentinel Forge ASCII banner without ANSI."""
 
     width = max(64, min(width, 96))
     inner = width - 2
     content_width = inner - 2
-    if len(brand.product) > content_width or len(brand.signature_line) > content_width:
-        raise ValueError("CLI product/signature text is too long for the configured banner width")
+    if len(brand.product_line) > content_width or len(brand.developer_line) > content_width:
+        raise ValueError("CLI product/developer text is too long for the configured banner width")
     description_lines = wrap(
         brand.description,
         width=content_width,
         break_long_words=False,
         break_on_hyphens=False,
     ) or [""]
-    lines = ["SENTINEL FORGE", brand.product, *description_lines, brand.signature_line]
+    lines = [
+        "",
+        brand.product_line,
+        brand.developer_line,
+        "",
+        *description_lines,
+        "",
+    ]
     top = "+" + "-" * inner + "+"
     body = [f"| {line:<{content_width}} |" for line in lines]
     return "\n".join([top, *body, top])
@@ -83,6 +94,8 @@ def normalize_no_color_argv(argv: Sequence[str]) -> list[str]:
 
 
 def color_enabled(*, no_color: bool = False) -> bool:
+    """Return whether human-facing ANSI styling is allowed."""
+
     return not no_color and "NO_COLOR" not in os.environ
 
 
@@ -98,7 +111,7 @@ def should_show_banner() -> bool:
 
 
 def render_banner(brand: CLIBrand, *, no_color: bool = False) -> None:
-    """Render a subdued green banner to stderr so stdout remains script-friendly."""
+    """Render the canonical banner in subdued green to stderr."""
 
     if not should_show_banner():
         return
@@ -114,7 +127,7 @@ def render_banner(brand: CLIBrand, *, no_color: bool = False) -> None:
 
 @contextmanager
 def color_environment(*, no_color: bool) -> Iterator[None]:
-    """Temporarily expose NO_COLOR so Rich help follows the global option."""
+    """Temporarily expose NO_COLOR so Rich/Typer help follows the global option."""
 
     previous = os.environ.get("NO_COLOR")
     if no_color:

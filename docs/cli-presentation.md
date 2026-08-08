@@ -1,6 +1,6 @@
 # CLI presentation contract
 
-Sentinel Forge CLIs use a shared SRIC presentation layer. Interactive console entrypoints render a compact ASCII banner containing the product name, a one-line description, and the signature `IsdarlinM :: vX.X.X`.
+Sentinel Forge CLIs use a shared SRIC presentation layer. Interactive console entrypoints render a compact ASCII banner in this canonical order: `Tool :: vX.X.X`, `Developer: IsdarlinM`, then the concise product description.
 
 The banner uses a subdued green ANSI style and is written to stderr only when running on an interactive terminal. Redirected stdout, JSON output, exports, evidence, and API payloads remain free of presentation escape sequences.
 
