@@ -5,6 +5,7 @@ set "CMD=sric"
 set "SCRIPT_DIR=%~dp0"
 for %%I in ("%SCRIPT_DIR%..") do set "REPO_ROOT=%%~fI"
 set "CONSTRAINTS=%REPO_ROOT%\requirements\runtime-py311.lock"
+set "FIRST_PARTY=%REPO_ROOT%\requirements\first-party.txt"
 set "INSTALL_ROOT=%LOCALAPPDATA%\SRIC"
 set "VENV=%INSTALL_ROOT%\venv"
 set "BIN_DIR=%USERPROFILE%\.local\bin"
@@ -26,6 +27,9 @@ if not exist "%VENV%\Scripts\python.exe" (
 )
 "%VENV%\Scripts\python.exe" -m pip install --upgrade pip || exit /b 1
 
+if exist "%FIRST_PARTY%" (
+  "%VENV%\Scripts\python.exe" -m pip install --upgrade -r "%FIRST_PARTY%" || (echo Failed to install Sentinel Forge first-party dependencies.& exit /b 3)
+)
 "%VENV%\Scripts\python.exe" -m pip install --upgrade -c "%CONSTRAINTS%" "%REPO_ROOT%" || exit /b 1
 >"%BIN_DIR%\%CMD%.cmd" echo @"%VENV%\Scripts\%CMD%.exe" %%*
 
