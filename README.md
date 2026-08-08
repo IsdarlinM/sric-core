@@ -1,8 +1,10 @@
 # Security Research Intelligence Core (SRIC)
 
 ```text
-SRIC Core
-IsdarlinM :: v0.5.2
+SRIC Core :: v0.5.2
+Developer: IsdarlinM
+
+Evidence-native shared core for security research intelligence.
 ```
 
 Shared evidence-native runtime and interoperability layer for ReproSec, AuthTwin, FossilScope, TrustBoundary Mapper and Exposure DNA.
@@ -65,7 +67,7 @@ sric capabilities
 
 ## CLI presentation
 
-Interactive terminals display a compact subdued-green banner containing the product name, a brief purpose statement and `IsdarlinM :: v0.5.2`. Use `sric --no-color COMMAND` or the standard `NO_COLOR` environment variable for plain terminal output. Presentation is kept off machine-readable stdout; see `docs/cli-presentation.md`.
+Interactive terminals display a compact subdued-green banner ordered as `SRIC Core :: v0.5.2`, `Developer: IsdarlinM`, then a brief purpose statement. Use `sric --no-color COMMAND`, `sric COMMAND --no-color`, or the standard `NO_COLOR` environment variable for plain terminal output. Presentation is kept off machine-readable stdout; see `docs/cli-presentation.md`.
 
 ## Validation
 
