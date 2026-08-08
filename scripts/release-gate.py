@@ -60,6 +60,40 @@ def metadata() -> tuple[str, str, list[str]]:
     return project["name"], project["version"], sorted((project.get("scripts") or {}).keys())
 
 
+def source_identity() -> dict[str, object]:
+    """Bind machine-readable release evidence to the exact source tree when Git is available."""
+
+    identity: dict[str, object] = {
+        "commit_sha": None,
+        "tree_sha": None,
+        "dirty": None,
+    }
+    if not shutil.which("git") or not (ROOT / ".git").exists():
+        identity["note"] = "Git metadata unavailable in this execution environment."
+        return identity
+
+    def capture(*args: str) -> str:
+        process = subprocess.run(
+            ["git", *args],
+            cwd=ROOT,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            check=True,
+        )
+        return process.stdout.strip()
+
+    try:
+        identity["commit_sha"] = capture("rev-parse", "HEAD")
+        identity["tree_sha"] = capture("rev-parse", "HEAD^{tree}")
+        identity["dirty"] = bool(capture("status", "--porcelain"))
+    except (OSError, subprocess.CalledProcessError) as exc:
+        identity["note"] = f"Unable to resolve Git source identity: {exc}"
+    return identity
+
+
 def isolated_wheel_smoke(
     wheel: Path, scripts: list[str], offline: bool
 ) -> list[dict[str, object]]:
@@ -164,9 +198,10 @@ def main() -> int:
     OUT.mkdir(parents=True, exist_ok=True)
     status = "PASS" if all(item["status"] == "PASS" for item in checks) else "FAIL"
     report = {
-        "schema": "sentinel-forge.local-release-gate.v1",
+        "schema": "sentinel-forge.local-release-gate.v2",
         "project": project,
         "version": version,
+        "source": source_identity(),
         "python": sys.version,
         "platform": sys.platform,
         "status": status,
