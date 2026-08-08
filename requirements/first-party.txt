@@ -1,0 +1,2 @@
+# Sentinel Forge first-party dependencies for SRIC Core.
+# SRIC Core is the shared foundation and intentionally has no mandatory sibling products.
