@@ -32,7 +32,7 @@ dev = [
 ]
 
 [project.scripts]
-sric = "sric.cli_vnext:run"
+sric = "sric.cli_all:run"
 
 [tool.setuptools.packages.find]
 where = ["src"]
