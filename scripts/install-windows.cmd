@@ -40,6 +40,7 @@ if errorlevel 1 (
 )
 
 "%VENV%\Scripts\%CMD%.exe" doctor || exit /b 1
+"%VENV%\Scripts\%CMD%.exe" capabilities || exit /b 1
 echo %PROJECT% installed successfully.
 echo Open a new Command Prompt and run: %CMD% --help
 exit /b 0
