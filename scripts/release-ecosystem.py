@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import subprocess
 import sys
 import time
@@ -37,7 +38,12 @@ def dependency_spec(metadata: dict[str, Any], package: str) -> str | None:
     prefix = package.lower()
     for dependency in metadata["dependencies"]:
         compact = dependency.replace(" ", "")
-        if compact.lower() == prefix or compact.lower().startswith(prefix + ">") or compact.lower().startswith(prefix + "<") or compact.lower().startswith(prefix + "="):
+        if (
+            compact.lower() == prefix
+            or compact.lower().startswith(prefix + ">")
+            or compact.lower().startswith(prefix + "<")
+            or compact.lower().startswith(prefix + "=")
+        ):
             return compact[len(package) :]
     return None
 
@@ -142,6 +148,40 @@ def compatibility_checks(metadata: dict[str, dict[str, Any]]) -> list[dict[str, 
     return checks
 
 
+def run_ecosystem_smoke(root: Path, selected: tuple[str, ...]) -> dict[str, Any]:
+    if set(selected) != set(REPOSITORIES):
+        return {
+            "status": "SKIP",
+            "reason": "cross-product smoke requires all six repositories",
+        }
+    script = root / "sric-core" / "scripts" / "ecosystem-smoke.py"
+    if not script.is_file():
+        return {"status": "FAIL", "reason": f"missing {script}"}
+
+    source_paths = [str(root / name / "src") for name in REPOSITORIES]
+    env = os.environ.copy()
+    existing = env.get("PYTHONPATH")
+    env["PYTHONPATH"] = os.pathsep.join(source_paths + ([existing] if existing else []))
+    started = time.monotonic()
+    process = subprocess.run(
+        [sys.executable, str(script)],
+        cwd=root / "sric-core",
+        env=env,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        check=False,
+    )
+    return {
+        "status": "PASS" if process.returncode == 0 else "FAIL",
+        "returncode": process.returncode,
+        "duration_seconds": round(time.monotonic() - started, 3),
+        "output_tail": "\n".join((process.stdout or "").splitlines()[-80:]),
+    }
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Run the Sentinel Forge local release train")
     parser.add_argument(
@@ -174,22 +214,29 @@ def main() -> int:
         run_gate(args.root / name, quick=args.quick, offline=args.offline)
         for name in selected
     ]
+    ecosystem_smoke = run_ecosystem_smoke(args.root, selected)
+
     status = "PASS"
     if any(item["status"] != "PASS" for item in compatibility + gate_results):
+        status = "FAIL"
+    if ecosystem_smoke["status"] == "FAIL":
         status = "FAIL"
 
     output = args.root / "sric-core" / "build" / "release-evidence"
     output.mkdir(parents=True, exist_ok=True)
     report_path = output / "ecosystem-release-gate.json"
     report = {
-        "schema": "sentinel-forge.ecosystem-release-gate.v1",
+        "schema": "sentinel-forge.ecosystem-release-gate.v2",
         "status": status,
         "repository_order": list(selected),
         "versions": {name: data["version"] for name, data in metadata.items()},
         "compatibility": compatibility,
         "repositories": gate_results,
+        "ecosystem_smoke": ecosystem_smoke,
     }
-    report_path.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    report_path.write_text(
+        json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
 
     for item in compatibility:
         print(
@@ -200,6 +247,9 @@ def main() -> int:
         print(f"[{item['status']}] {item['repository']}")
         if item["status"] != "PASS" and item.get("output_tail"):
             print(item["output_tail"])
+    print(f"[{ecosystem_smoke['status']}] ecosystem contract smoke")
+    if ecosystem_smoke.get("output_tail"):
+        print(ecosystem_smoke["output_tail"])
     print(f"Evidence: {report_path}")
     return 0 if status == "PASS" else 1
 
