@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.5.1 - 2026-08-08
+- Added an explicit first-party dependency manifest consumed by both Windows and Linux installers.
+- Installer dependency bootstrap is now separated from third-party PyPI resolution so downstream Sentinel Forge products can resolve author-maintained packages from pinned GitHub source archives.
+- Kept SRIC itself free of mandatory sibling-product dependencies.
+
 ## 0.5.0 - 2026-08-08
 - Added the shared `SentinelCase` investigation contract for cross-product observations, hypotheses, evidence, counter-evidence and validation recipes.
 - Added deterministic cross-tool claim fingerprints and evidence-adequacy measurement without changing truth state.
