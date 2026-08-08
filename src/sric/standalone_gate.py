@@ -9,7 +9,7 @@ import sys
 import time
 import tomllib
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 SIBLING_PRODUCTS = {"reprosec", "authtwin", "fossilscope", "trustboundary", "exposuredna"}
 
@@ -71,15 +71,18 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Sentinel Forge Standalone Product Contract gate")
     parser.add_argument("--root", type=Path, default=Path.cwd())
     args = parser.parse_args()
-    root = args.root.resolve()
-    project = tomllib.loads((root / "pyproject.toml").read_text(encoding="utf-8"))["project"]
-    project_name = str(project["name"])
-    scripts = dict(project.get("scripts", {}))
+    root = cast(Path, args.root).resolve()
+    document = tomllib.loads((root / "pyproject.toml").read_text(encoding="utf-8"))
+    project = cast(dict[str, Any], document["project"])
+    project_name = cast(str, project["name"])
+    project_version = cast(str, project["version"])
+    scripts = cast(dict[str, str], project.get("scripts", {}))
     if len(scripts) != 1:
         raise SystemExit("Standalone gate currently requires exactly one public console script")
     command_name = next(iter(scripts))
 
-    runtime_dependencies = [_dependency_name(item) for item in project.get("dependencies", [])]
+    declared_dependencies = cast(list[str], project.get("dependencies", []))
+    runtime_dependencies = [_dependency_name(item) for item in declared_dependencies]
     forbidden = sorted(
         name for name in SIBLING_PRODUCTS if name != project_name and name in runtime_dependencies
     )
@@ -99,27 +102,37 @@ def main() -> int:
     checks: list[dict[str, Any]] = [dependency_check]
     standalone_tests = root / "tests" / "standalone"
     if standalone_tests.is_dir():
-        checks.append(_run("standalone pytest", [sys.executable, "-m", "pytest", str(standalone_tests), "-q"], cwd=root))
+        checks.append(
+            _run(
+                "standalone pytest",
+                [sys.executable, "-m", "pytest", str(standalone_tests), "-q"],
+                cwd=root,
+            )
+        )
     else:
-        checks.append({
-            "name": "standalone pytest",
-            "command": [],
-            "status": "FAIL",
-            "returncode": 1,
-            "duration_seconds": 0.0,
-            "output_tail": "tests/standalone is required",
-        })
+        checks.append(
+            {
+                "name": "standalone pytest",
+                "command": [],
+                "status": "FAIL",
+                "returncode": 1,
+                "duration_seconds": 0.0,
+                "output_tail": "tests/standalone is required",
+            }
+        )
 
     executable = shutil.which(command_name)
     if executable is None:
-        checks.append({
-            "name": "installed console script",
-            "command": [command_name],
-            "status": "FAIL",
-            "returncode": 1,
-            "duration_seconds": 0.0,
-            "output_tail": f"{command_name} is not installed on PATH",
-        })
+        checks.append(
+            {
+                "name": "installed console script",
+                "command": [command_name],
+                "status": "FAIL",
+                "returncode": 1,
+                "duration_seconds": 0.0,
+                "output_tail": f"{command_name} is not installed on PATH",
+            }
+        )
     else:
         for name, argv in (
             ("root --help", [executable, "--help"]),
@@ -135,10 +148,10 @@ def main() -> int:
     output = root / "build" / "release-evidence"
     output.mkdir(parents=True, exist_ok=True)
     report_path = output / "standalone-gate.json"
-    report = {
+    report: dict[str, Any] = {
         "schema": "sentinel-forge.standalone-product-contract.v1",
         "project": project_name,
-        "version": project["version"],
+        "version": project_version,
         "source": _source_identity(root),
         "status": status,
         "checks": checks,
