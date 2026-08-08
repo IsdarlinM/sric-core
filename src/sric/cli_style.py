@@ -5,6 +5,7 @@ import sys
 from collections.abc import Callable, Iterator, Sequence
 from contextlib import contextmanager
 from dataclasses import dataclass
+from textwrap import wrap
 from typing import Any
 
 import typer
@@ -29,16 +30,18 @@ def build_banner(brand: CLIBrand, *, width: int = 76) -> str:
 
     width = max(64, min(width, 96))
     inner = width - 2
-    lines = [
-        "SENTINEL FORGE",
-        brand.product,
+    content_width = inner - 2
+    if len(brand.product) > content_width or len(brand.signature_line) > content_width:
+        raise ValueError("CLI product/signature text is too long for the configured banner width")
+    description_lines = wrap(
         brand.description,
-        brand.signature_line,
-    ]
-    if any(len(line) > inner - 2 for line in lines):
-        raise ValueError("CLI brand text is too long for the configured banner width")
+        width=content_width,
+        break_long_words=False,
+        break_on_hyphens=False,
+    ) or [""]
+    lines = ["SENTINEL FORGE", brand.product, *description_lines, brand.signature_line]
     top = "+" + "-" * inner + "+"
-    body = [f"| {line:<{inner - 2}} |" for line in lines]
+    body = [f"| {line:<{content_width}} |" for line in lines]
     return "\n".join([top, *body, top])
 
 
