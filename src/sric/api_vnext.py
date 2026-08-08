@@ -15,6 +15,8 @@ from .calibration import (
     score_confidence,
     skeptic_review,
 )
+from .capabilities import discover_capabilities
+from .cases import SentinelCase, claim_fingerprint, evidence_adequacy
 from .merkle import EvidenceDigest, build_merkle_proof, evidence_merkle_root
 from .source_quality import SourceProfile, resolve_source_independence
 
@@ -60,7 +62,29 @@ class EvidenceMerkleRequest(BaseModel):
     prove_evidence_id: str | None = None
 
 
+class ClaimFingerprintRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    claim_type: str
+    subject: str
+    predicate: str
+    object_value: str
+    context: dict[str, object] = Field(default_factory=dict)
+
+
+class CaseAnalysisRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    case: SentinelCase
+    required_evidence: list[str] = Field(default_factory=list)
+
+
 router = APIRouter(prefix="/api/v1/evidence-native", tags=["evidence-native"])
+
+
+@router.get("/capabilities")
+async def capabilities(current_product: str | None = None) -> dict[str, object]:
+    """Discover installed Sentinel Forge products without importing sibling product code."""
+
+    return discover_capabilities(current_product=current_product).model_dump(mode="json")
 
 
 @router.post("/confidence/analyze")
@@ -159,6 +183,38 @@ async def integrity_merkle(request: EvidenceMerkleRequest) -> dict[str, object]:
         )
         response["proof"] = proof.model_dump(mode="json")
     return response
+
+
+@router.post("/claims/fingerprint")
+async def fingerprint_claim(request: ClaimFingerprintRequest) -> dict[str, object]:
+    return {
+        "claim_fingerprint": claim_fingerprint(
+            claim_type=request.claim_type,
+            subject=request.subject,
+            predicate=request.predicate,
+            object_value=request.object_value,
+            context=request.context,
+        ),
+        "validated_finding_created": False,
+    }
+
+
+@router.post("/cases/analyze")
+async def analyze_case(request: CaseAnalysisRequest) -> dict[str, object]:
+    return {
+        "case_id": request.case.case_id,
+        "maturity": request.case.maturity.value,
+        "artifact_count": len(request.case.artifacts),
+        "validation_recipe_count": len(request.case.validation_recipes),
+        "evidence_ids": request.case.evidence_ids(),
+        "counter_evidence_ids": request.case.counter_evidence_ids(),
+        "unresolved_artifact_ids": request.case.unresolved_artifacts(),
+        "evidence_adequacy": evidence_adequacy(
+            request.case.artifacts,
+            request.required_evidence,
+        ),
+        "truth_state_modified": False,
+    }
 
 
 def create_app() -> FastAPI:

@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.5.0 - 2026-08-08
+- Added the shared `SentinelCase` investigation contract for cross-product observations, hypotheses, evidence, counter-evidence and validation recipes.
+- Added deterministic cross-tool claim fingerprints and evidence-adequacy measurement without changing truth state.
+- Added `AutomatedCorrelationStatus`; automated correlation is now structurally limited to `INFERRED` or `HYPOTHESIS` and cannot emit `VALIDATED`.
+- Added validation-recipe safety guards that reject prohibited/out-of-scope actions and require human approval for mutating validation.
+- Added the Standalone Product Contract and compatibility-aware capability discovery without importing sibling product code.
+- Added `sric capabilities`, the read-only capability API and a shared standalone gate that verifies dependency isolation, CLI safety and product readiness.
+- Added ecosystem standalone conformance evidence so every product must pass independently before the integrated release train can pass.
+- Added installer/uninstaller preservation tests and cross-platform clean-install CI contracts for downstream products.
+- Added 0.5 regression tests for case integrity, evidence gates, capability compatibility and automated-correlation state safety.
+- Added least-privilege GitHub Actions CI across Linux/Windows and Python 3.11-3.13 plus a full release-gate evidence job.
+
 ## 0.4.1 - 2026-08-06
 - Added explainable confidence scoring with source-group deduplication, temporal decay, source quality, specificity and required-evidence completeness.
 - Added a mandatory Skeptic review primitive that can retain, reduce, reject or abstain as `UNKNOWN` without validating findings.

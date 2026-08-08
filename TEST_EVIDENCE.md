@@ -1,58 +1,44 @@
-# Test Evidence — SRIC Core v0.4.1
+# Test Evidence — SRIC Core v0.5.0 Release Candidate
 
-## QA pass — 2026-08-07
+## Release-candidate review — 2026-08-08
 
-Current source changes were audited through the authenticated GitHub connector and the high-risk changed modules were reconstructed in the local runtime.
+The `agent/release-0.5.0` branch contains:
 
-Freshly executed in this QA pass:
+- `SentinelCase`, evidence-linked case artifacts and validation recipes;
+- deterministic cross-tool claim fingerprints and evidence-adequacy measurement;
+- automated correlation restricted to `INFERRED` / `HYPOTHESIS`;
+- compatibility-aware Capability Registry that does not import sibling product code;
+- `sric capabilities` and the capability API;
+- shared Standalone Product Contract gate and six-repository standalone conformance gate;
+- Linux/Windows standalone/install CI matrices and SRIC installer preservation smoke definitions;
+- release evidence bound to Git commit SHA, tree SHA and dirty state when available;
+- coordinated ecosystem smoke and local internal wheelhouse support.
 
-- targeted SRIC unit regression matrix for bitemporal evidence, confidence/Skeptic calibration, source independence, Merkle integrity and SDK/interchange logic: **15 passed**;
-- Python `compileall` over the reconstructed corrected modules: **PASS**;
-- cross-product Sentinel Forge high-risk regression matrix: **7 passed** across ReproSec, AuthTwin, FossilScope, TrustBoundary and Exposure DNA;
-- branch comparison against `main`: branch is ahead and **0 commits behind** at the time of this audit.
+## Fresh execution status
 
-Additional regression tests were added for:
+**THE COMPLETE v0.5.0 TEST/RELEASE GATES HAVE NOT EXECUTED SUCCESSFULLY FOR THIS BRANCH.**
 
-- canonical bitemporal comparisons;
-- reserved JSON-LD fields and duplicate graph IDs;
-- dependency cycles overriding declared source independence;
-- API input-domain and controlled 4xx error handling;
-- every registered CLI help path through the real vNext entrypoint;
-- `sric web` serving the same vNext API that exposes evidence-native routes;
-- CLI claim-transition errors returning controlled exit codes instead of tracebacks.
+This runtime can read and modify the private repository through the authenticated GitHub connector, but cannot materialize it as a complete local checkout. The latest observed GitHub Actions run pattern terminates with `startup_failure` before creating jobs; zero-job workflow attempts are not considered test evidence.
 
-## Current release-gate status
+No v0.5.0 pytest, static-analysis, installer, build or release result is claimed from a workflow that never started a job.
 
-**FULL LOCAL RELEASE GATE NOT EXECUTABLE IN THIS RUNTIME.**
+## Required exact-commit evidence
 
-The repositories are private and the runtime cannot resolve or connect to `github.com` / `raw.githubusercontent.com`, so a complete checkout cannot be materialized outside the GitHub connector. The connector exposes individual blobs but not a mountable repository archive. Therefore the complete current `pytest` tree, build/install smoke and every unchanged historical test cannot honestly be reported as freshly executed here.
-
-The following release tools are also unavailable in the runtime and cannot be installed from its package index:
-
-- Ruff;
-- mypy;
-- `build`;
-- `pip-audit`.
-
-No GitHub Actions, Codespaces or other hosted/paid GitHub execution was used.
-
-Do not describe v0.4.1 as a fully validated release until the exact commit produces `PASS` from a complete sibling checkout using:
+From a directory containing the six 0.5 candidate checkouts:
 
 ```bash
-python -m pip install -e '.[dev]'
-python scripts/release-gate.py
-python scripts/release-ecosystem.py --root ..
+python -m sric.standalone_gate --root sric-core
+python sric-core/scripts/release-standalone-ecosystem.py --root .
+python sric-core/scripts/release-gate.py
+python sric-core/scripts/release-ecosystem.py --root .
 ```
 
-## Previous validated baseline
+Release requires PASS for:
 
-The previous v0.4.0 source state was recorded on 2026-07-22 with:
+- every product `standalone-gate.json`;
+- `ecosystem-standalone-gate.json`;
+- every repository `release-gate.json`;
+- `ecosystem-release-gate.json`;
+- platform installer/update/browser-E2E evidence tied to the same release tree.
 
-- pytest: **57 passed**;
-- compileall: **PASS**;
-- security scan: **PASS**;
-- CLI help coverage: **PASS** for 43 registered command paths;
-- synthetic/local functional smoke: **PASS**;
-- wheel build and isolated wheel smoke against the then-validated runtime dependency layer: **PASS**.
-
-Those historical results apply only to the previous v0.4.0 state. They are a regression baseline, not proof of v0.4.1.
+Previous targeted QA and older validated baselines remain regression context only; they are not proof that v0.5.0 passed.

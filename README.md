@@ -2,48 +2,55 @@
 
 ```text
 SRIC CORE
-imr :: v0.4.1
+imr :: v0.5.0
 ```
 
-Shared evidence-native primitives for ReproSec, AuthTwin, FossilScope, TrustBoundary Mapper and Exposure DNA.
+Shared evidence-native runtime and interoperability layer for ReproSec, AuthTwin, FossilScope, TrustBoundary Mapper and Exposure DNA.
 
 > **AI proposes. Evidence proves. Humans control.**
 
+## Product model
+
+Every Sentinel Forge product is independently installable and independently useful. SRIC is the shared runtime dependency, not a requirement to install the entire kit.
+
+```text
+ReproSec ---------\
+AuthTwin ----------\
+FossilScope --------> SRIC Core
+TrustBoundary -----/
+Exposure DNA -----/
+```
+
+Sibling products are optional capabilities. SRIC discovers installed, release-train-compatible products through package metadata without importing or executing sibling code:
+
+```bash
+sric capabilities
+sric capabilities --product fossilscope
+```
+
+An installed but incompatible product is reported as present but does not publish capabilities.
+
 ## Implemented
 
-- Typed truth states: `OBSERVED`, `INFERRED`, `HYPOTHESIS`, `VALIDATED`, `REJECTED`, `UNKNOWN`.
-- Claim-Evidence Contract v2 with evidence, counter-evidence, assumptions, alternative explanations, temporal validity and deterministic validation history.
-- Content-addressed evidence store with SHA-256 integrity checks and size limits.
-- Scope Engine with allow/deny rules, method policy, redirect revalidation and private/special-network SSRF controls.
-- Deterministic Policy Engine with action classes and separate preflight/human approval semantics.
-- Conservative HTTP action classifier: GET/HEAD are not automatically safe; DELETE is destructive by default.
-- Shared global/per-host active-request rate limiter.
-- Structured redaction for headers/text, query parameters, JSON and form-urlencoded data.
-- Audit logging with query-secret redaction.
-- Provider-neutral AI abstraction; AI is disabled by default and cannot bypass Scope or Policy.
-- Plugin manifest/type/permission model with process isolation and artifact-hash verification primitives.
-- SQLite/SQLAlchemy storage foundation with Alembic migration baseline and optional explicit PostgreSQL configuration.
-- Shared Ecosystem Workspace v2 with stable IDs, namespaces, locking, migrations, backup/restore and integrity checks.
-- Temporal Security Knowledge Graph v2 with evidence-bearing relationships and bounded read-only queries.
-- Persistent cancellable Job/Event Engine with DAG dependencies, budgets, resumable metadata and SSE events.
-- Evidence Lineage API, reproducible Research Notebook and saved queries.
-- Hostile import preflight for files/ZIPs and explicit untrusted-data prompt boundaries.
-- Role-separated Cartographer, Historian, Security Analyst, Validator, Skeptic, Evidence Agent and Orchestrator proposal primitives.
-- Secret Vault abstraction preferring OS keyring and encrypted-file fallback.
-- Versioned safety/AI eval runner covering prompt injection, false ownership/auth, temporal confusion, fake evidence, unsafe validation and scope expansion.
-- Signed Ed25519/SHA-256 wheel update primitive; HTTP manifests and blind production `git pull` are rejected.
-
-## Precision and false-positive controls in v0.4.1
-
-SRIC now exposes shared confidence-calibration primitives for all Sentinel Forge products:
-
-- source-group deduplication prevents mirrors and derived feeds from inflating confidence;
-- temporal half-life discounts stale observations;
-- direct/derived evidence, source quality and signal specificity are explicit;
-- missing required evidence lowers confidence and forces Skeptic abstention;
-- counter-evidence and alternative explanations can reduce or reject a candidate;
-- confidence remains advisory and cannot create a `VALIDATED` finding;
-- Brier score and Expected Calibration Error support measurable evaluation datasets.
+- typed truth states: `OBSERVED`, `INFERRED`, `HYPOTHESIS`, `VALIDATED`, `REJECTED`, `UNKNOWN`;
+- `SentinelCase` investigation contract with evidence/counter-evidence and validation recipes;
+- deterministic cross-tool claim fingerprints and evidence-adequacy measurement;
+- automated correlation structurally restricted to `INFERRED`/`HYPOTHESIS`;
+- content-addressed evidence store with SHA-256 integrity checks and size limits;
+- Scope Engine, Policy Engine, rate limits, approval gates and redirect revalidation;
+- structured redaction, audit logging and secret-safe defaults;
+- provider-neutral AI abstraction with AI disabled by default;
+- plugin manifest/type/permission model with isolation primitives;
+- Shared Ecosystem Workspace v2 and Temporal Security Knowledge Graph v2;
+- persistent cancellable Job/Event Engine with SSE;
+- Evidence Lineage, Research Notebook and saved queries;
+- hostile import preflight and explicit untrusted-data prompt boundaries;
+- role-separated Cartographer, Historian, Security Analyst, Validator, Skeptic, Evidence Agent and Orchestrator primitives;
+- Secret Vault abstraction;
+- versioned safety/AI evals;
+- signed Ed25519/SHA-256 wheel update primitive;
+- compatibility-aware first-party Capability Registry;
+- shared Standalone Product Contract gate and ecosystem standalone conformance gate.
 
 ## Development install
 
@@ -51,38 +58,40 @@ SRIC now exposes shared confidence-calibration primitives for all Sentinel Forge
 python -m venv .venv
 . .venv/bin/activate  # Windows: .venv\Scripts\activate
 python -m pip install -e '.[dev]'
-python -m pytest
 sric doctor
+sric capabilities
 ```
 
-## Local release gate
+## Validation
 
-This repository does not depend on hosted CI. Run the complete cross-platform release gate locally:
+Standalone contract:
+
+```bash
+python -m sric.standalone_gate --root .
+```
+
+Full repository gate:
 
 ```bash
 python scripts/release-gate.py
 ```
 
-It runs compile checks, Ruff, strict mypy, pytest, security scans, safety evals, dependency audit, SBOM generation, package build, isolated wheel installation and CLI help smoke tests. Machine-readable evidence is written to `build/release-evidence/release-gate.json`.
-
-A quicker non-release pass is available with:
+Six-product standalone conformance from sibling checkouts:
 
 ```bash
-python scripts/release-gate.py --quick
+python sric-core/scripts/release-standalone-ecosystem.py --root .
 ```
+
+Integrated release train:
+
+```bash
+python sric-core/scripts/release-ecosystem.py --root .
+```
+
+Machine-readable evidence is written below `build/release-evidence/`. A release requires PASS tied to the exact source commit/tree.
 
 ## Safety defaults
 
-Telemetry, cloud AI and external uploads are off. Non-loopback API binding is rejected until authenticated TLS mode exists. Scope and Policy are deterministic components outside the LLM boundary.
-
-## First five minutes
-
-```bash
-sric doctor
-sric workspace create demo
-sric scope check https://api.example.com --allow '*.example.com'
-sric ai status
-sric --help
-```
+Telemetry, cloud AI and external uploads are OFF. Non-loopback API binding is rejected until authenticated TLS mode exists. Scope and Policy are deterministic components outside the LLM boundary.
 
 The master blueprint remains normative. Features not listed as implemented must not be presented as complete.

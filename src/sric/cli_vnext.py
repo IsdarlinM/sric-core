@@ -11,6 +11,7 @@ from pydantic import ValidationError
 
 from . import cli as base
 from .api_vnext import create_app as create_vnext_app
+from .cases import SentinelCase, claim_fingerprint, evidence_adequacy
 from .claims import ClaimContract, transition_claim
 from .evals import BUILTIN_CASES, EvalRunner
 from .graph import TemporalGraph
@@ -35,9 +36,14 @@ secret_app = typer.Typer(
     context_settings={"help_option_names": ["-h", "--help"]},
     help="Manage opaque secret references without logging secret values.",
 )
+case_app = typer.Typer(
+    context_settings={"help_option_names": ["-h", "--help"]},
+    help="Inspect evidence-native Sentinel Cases and claim fingerprints.",
+)
 app.add_typer(graph_app, name="graph")
 app.add_typer(eval_app, name="eval")
 app.add_typer(secret_app, name="secret")
+app.add_typer(case_app, name="case")
 
 
 @workspace_app.command("integrity")
@@ -185,6 +191,59 @@ def secret_list(
     workspace: Path = typer.Option(..., "--workspace", exists=True, file_okay=False),
 ) -> None:
     typer.echo(json.dumps([item.__dict__ for item in SecretVault(workspace).list()], indent=2))
+
+
+@case_app.command("inspect")
+def case_inspect(
+    path: Path = typer.Argument(..., exists=True, dir_okay=False),
+    required_evidence: list[str] = typer.Option([], "--required-evidence"),
+) -> None:
+    try:
+        case = SentinelCase.model_validate_json(path.read_text(encoding="utf-8"))
+    except (OSError, ValidationError) as exc:
+        typer.echo(f"invalid Sentinel Case: {exc}", err=True)
+        raise typer.Exit(2) from exc
+    typer.echo(
+        json.dumps(
+            {
+                "case_id": case.case_id,
+                "maturity": case.maturity.value,
+                "artifact_count": len(case.artifacts),
+                "validation_recipe_count": len(case.validation_recipes),
+                "evidence_ids": case.evidence_ids(),
+                "counter_evidence_ids": case.counter_evidence_ids(),
+                "unresolved_artifact_ids": case.unresolved_artifacts(),
+                "evidence_adequacy": evidence_adequacy(case.artifacts, required_evidence),
+                "truth_state_modified": False,
+            },
+            indent=2,
+        )
+    )
+
+
+@case_app.command("fingerprint")
+def case_fingerprint(
+    claim_type: str = typer.Option(..., "--type"),
+    subject: str = typer.Option(..., "--subject"),
+    predicate: str = typer.Option(..., "--predicate"),
+    object_value: str = typer.Option(..., "--object"),
+    context: str = typer.Option("{}", "--context", help="JSON object with claim context."),
+) -> None:
+    try:
+        parsed = json.loads(context)
+        if not isinstance(parsed, dict):
+            raise ValueError("context must be a JSON object")
+        fingerprint = claim_fingerprint(
+            claim_type=claim_type,
+            subject=subject,
+            predicate=predicate,
+            object_value=object_value,
+            context=parsed,
+        )
+    except (json.JSONDecodeError, ValueError) as exc:
+        typer.echo(f"invalid fingerprint input: {exc}", err=True)
+        raise typer.Exit(2) from exc
+    typer.echo(fingerprint)
 
 
 @app.command("claim-transition")
