@@ -15,6 +15,7 @@ from .calibration import (
     score_confidence,
     skeptic_review,
 )
+from .capabilities import discover_capabilities
 from .cases import SentinelCase, claim_fingerprint, evidence_adequacy
 from .merkle import EvidenceDigest, build_merkle_proof, evidence_merkle_root
 from .source_quality import SourceProfile, resolve_source_independence
@@ -77,6 +78,13 @@ class CaseAnalysisRequest(BaseModel):
 
 
 router = APIRouter(prefix="/api/v1/evidence-native", tags=["evidence-native"])
+
+
+@router.get("/capabilities")
+async def capabilities(current_product: str | None = None) -> dict[str, object]:
+    """Discover installed Sentinel Forge products without importing sibling product code."""
+
+    return discover_capabilities(current_product=current_product).model_dump(mode="json")
 
 
 @router.post("/confidence/analyze")
