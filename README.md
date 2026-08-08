@@ -1,8 +1,8 @@
 # Security Research Intelligence Core (SRIC)
 
 ```text
-SRIC CORE
-imr :: v0.5.0
+SRIC Core
+IsdarlinM :: v0.5.2
 ```
 
 Shared evidence-native runtime and interoperability layer for ReproSec, AuthTwin, FossilScope, TrustBoundary Mapper and Exposure DNA.
@@ -50,7 +50,8 @@ An installed but incompatible product is reported as present but does not publis
 - versioned safety/AI evals;
 - signed Ed25519/SHA-256 wheel update primitive;
 - compatibility-aware first-party Capability Registry;
-- shared Standalone Product Contract gate and ecosystem standalone conformance gate.
+- shared Standalone Product Contract gate and ecosystem standalone conformance gate;
+- shared professional CLI presentation with subdued green banners, Rich help and `--no-color`/`NO_COLOR` support.
 
 ## Development install
 
@@ -61,6 +62,10 @@ python -m pip install -e '.[dev]'
 sric doctor
 sric capabilities
 ```
+
+## CLI presentation
+
+Interactive terminals display a compact subdued-green banner containing the product name, a brief purpose statement and `IsdarlinM :: v0.5.2`. Use `sric --no-color COMMAND` or the standard `NO_COLOR` environment variable for plain terminal output. Presentation is kept off machine-readable stdout; see `docs/cli-presentation.md`.
 
 ## Validation
 
