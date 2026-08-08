@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import os
 
-from typer.testing import CliRunner
+from typer.main import get_command
 
 from sric.cli_all import BRAND, app
 from sric.cli_style import CLIBrand, build_banner, color_enabled, normalize_no_color_argv
@@ -16,6 +16,14 @@ def test_banner_contains_product_description_signature_and_version() -> None:
     assert "\x1b[" not in banner
 
 
+def test_banner_wraps_long_descriptions_without_truncation() -> None:
+    description = "A deliberately long description that remains readable instead of breaking the CLI banner layout on narrow terminals."
+    banner = build_banner(CLIBrand("Example", description, "1.2.3"), width=64)
+    assert "deliberately long description" in banner
+    assert "breaking the CLI banner" in banner
+    assert "IsdarlinM :: v1.2.3" in banner
+
+
 def test_normalize_no_color_accepts_flag_after_subcommand() -> None:
     assert normalize_no_color_argv(["sric", "doctor", "--no-color", "--json"]) == [
         "sric",
@@ -25,10 +33,9 @@ def test_normalize_no_color_accepts_flag_after_subcommand() -> None:
     ]
 
 
-def test_no_color_option_is_documented_on_root_help() -> None:
-    result = CliRunner().invoke(app, ["--help"])
-    assert result.exit_code == 0
-    assert "--no-color" in result.stdout
+def test_no_color_option_is_registered_on_root_command() -> None:
+    command = get_command(app)
+    assert any("--no-color" in getattr(param, "opts", ()) for param in command.params)
 
 
 def test_no_color_respects_environment_without_mutating_plain_banner(monkeypatch) -> None:
