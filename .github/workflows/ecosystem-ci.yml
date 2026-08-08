@@ -25,37 +25,37 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: IsdarlinM/sric-core
-          ref: agent/release-0.5.0
+          ref: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref_name }}
           path: sentinel/sric-core
           token: ${{ secrets.SENTINEL_FORGE_CI_TOKEN }}
       - uses: actions/checkout@v4
         with:
           repository: IsdarlinM/reprosec
-          ref: agent/release-0.5.0
+          ref: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref_name }}
           path: sentinel/reprosec
           token: ${{ secrets.SENTINEL_FORGE_CI_TOKEN }}
       - uses: actions/checkout@v4
         with:
           repository: IsdarlinM/authtwin
-          ref: agent/release-0.5.0
+          ref: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref_name }}
           path: sentinel/authtwin
           token: ${{ secrets.SENTINEL_FORGE_CI_TOKEN }}
       - uses: actions/checkout@v4
         with:
           repository: IsdarlinM/fossilscope
-          ref: agent/release-0.5.0
+          ref: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref_name }}
           path: sentinel/fossilscope
           token: ${{ secrets.SENTINEL_FORGE_CI_TOKEN }}
       - uses: actions/checkout@v4
         with:
           repository: IsdarlinM/trustboundary
-          ref: agent/release-0.5.0
+          ref: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref_name }}
           path: sentinel/trustboundary
           token: ${{ secrets.SENTINEL_FORGE_CI_TOKEN }}
       - uses: actions/checkout@v4
         with:
           repository: IsdarlinM/exposuredna
-          ref: agent/release-0.5.0
+          ref: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref_name }}
           path: sentinel/exposuredna
           token: ${{ secrets.SENTINEL_FORGE_CI_TOKEN }}
 
