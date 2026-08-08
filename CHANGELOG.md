@@ -1,11 +1,11 @@
 # Changelog
 
 ## 0.5.2 - 2026-08-08
-- Added shared Sentinel Forge CLI branding primitives with product name, concise purpose and the `IsdarlinM :: vX.X.X` signature contract.
+- Added shared Sentinel Forge CLI branding primitives with the canonical `Tool :: vX.X.X`, `Developer: IsdarlinM`, description ordering.
 - Added a subdued green interactive banner rendered on stderr so redirected and machine-readable stdout remains clean.
 - Added global `--no-color` support, `NO_COLOR` compatibility and argument normalization so the flag can be accepted consistently by console entrypoints.
 - Enabled Rich/Typer command-help presentation while preserving plain output when color is disabled.
-- Added regression tests for banner identity, version/signature rendering and no-color behavior.
+- Added regression tests for exact banner ordering, version/developer rendering, wrapping and no-color behavior.
 
 ## 0.5.1 - 2026-08-08
 - Added an explicit first-party dependency manifest consumed by both Windows and Linux installers.
