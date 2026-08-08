@@ -34,16 +34,11 @@ PROFILE="${HOME}/.profile"
 PATH_LINE='export PATH="$HOME/.local/bin:$PATH"'
 touch "$PROFILE"
 if ! grep -F "$PATH_LINE" "$PROFILE" >/dev/null 2>&1; then
-  printf '
-# Security Research Intelligence tools
-%s
-' "$PATH_LINE" >> "$PROFILE"
+  printf '\n# Security Research Intelligence tools\n%s\n' "$PATH_LINE" >> "$PROFILE"
 fi
 
 "$VENV/bin/$CMD" doctor
-printf '%s installed successfully.
-' "$PROJECT"
-printf 'Command: %s
-' "$CMD"
-printf 'PATH is configured for new shells via %s.
-' "$PROFILE"
+"$VENV/bin/$CMD" capabilities
+printf '%s installed successfully.\n' "$PROJECT"
+printf 'Command: %s\n' "$CMD"
+printf 'PATH is configured for new shells via %s.\n' "$PROFILE"
