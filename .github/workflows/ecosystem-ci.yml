@@ -1,0 +1,86 @@
+name: Ecosystem Release Gate
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "scripts/release-ecosystem.py"
+      - "scripts/ecosystem-smoke.py"
+      - "src/sric/**"
+      - "pyproject.toml"
+
+permissions:
+  contents: read
+
+jobs:
+  release-train:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require private-repository read token
+        shell: bash
+        env:
+          SENTINEL_FORGE_CI_TOKEN: ${{ secrets.SENTINEL_FORGE_CI_TOKEN }}
+        run: test -n "$SENTINEL_FORGE_CI_TOKEN" || { echo 'Configure SENTINEL_FORGE_CI_TOKEN with read access to all six private repositories.'; exit 1; }
+
+      - uses: actions/checkout@v4
+        with:
+          repository: IsdarlinM/sric-core
+          ref: agent/release-0.5.0
+          path: sentinel/sric-core
+          token: ${{ secrets.SENTINEL_FORGE_CI_TOKEN }}
+      - uses: actions/checkout@v4
+        with:
+          repository: IsdarlinM/reprosec
+          ref: agent/release-0.5.0
+          path: sentinel/reprosec
+          token: ${{ secrets.SENTINEL_FORGE_CI_TOKEN }}
+      - uses: actions/checkout@v4
+        with:
+          repository: IsdarlinM/authtwin
+          ref: agent/release-0.5.0
+          path: sentinel/authtwin
+          token: ${{ secrets.SENTINEL_FORGE_CI_TOKEN }}
+      - uses: actions/checkout@v4
+        with:
+          repository: IsdarlinM/fossilscope
+          ref: agent/release-0.5.0
+          path: sentinel/fossilscope
+          token: ${{ secrets.SENTINEL_FORGE_CI_TOKEN }}
+      - uses: actions/checkout@v4
+        with:
+          repository: IsdarlinM/trustboundary
+          ref: agent/release-0.5.0
+          path: sentinel/trustboundary
+          token: ${{ secrets.SENTINEL_FORGE_CI_TOKEN }}
+      - uses: actions/checkout@v4
+        with:
+          repository: IsdarlinM/exposuredna
+          ref: agent/release-0.5.0
+          path: sentinel/exposuredna
+          token: ${{ secrets.SENTINEL_FORGE_CI_TOKEN }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install release tooling and runtime dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install build pip-audit pytest ruff mypy hypothesis httpx httpcore h2 PyYAML
+          python -m pip install -e sentinel/sric-core
+          python -m pip install -e sentinel/reprosec --no-deps
+          python -m pip install -e sentinel/authtwin --no-deps
+          python -m pip install -e sentinel/fossilscope --no-deps
+          python -m pip install -e sentinel/trustboundary --no-deps
+          python -m pip install -e sentinel/exposuredna --no-deps
+
+      - name: Run complete 0.5 release train
+        run: python sentinel/sric-core/scripts/release-ecosystem.py --root sentinel
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sentinel-forge-0.5-release-evidence
+          path: |
+            sentinel/*/build/release-evidence/
