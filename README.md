@@ -1,7 +1,7 @@
 # Security Research Intelligence Core (SRIC)
 
 ```text
-SRIC Core :: v0.5.8
+SRIC Core :: v0.5.9
 Developer: IsdarlinM
 
 Evidence-native shared core for security research intelligence.
@@ -60,6 +60,26 @@ An installed but incompatible product is reported as present but does not publis
 - shared Web Command Console with fixed-runner execution and no operating-system shell;
 - shared **Web Feature Workbench** that derives every public feature and every CLI argument/option from the installed Typer tree and renders structured responsive forms, approval controls, live jobs and output.
 
+## Installation
+
+Linux / Termux:
+
+```bash
+./scripts/install-linux.sh
+sric doctor
+sric capabilities
+```
+
+Windows:
+
+```cmd
+scripts\install-windows.cmd
+sric doctor
+sric capabilities
+```
+
+The 0.5.9 installers are idempotent/repair-capable, bootstrap `pip`, `setuptools` and `wheel`, run `pip check`, import-probe the shared Web runtime and smoke-test all root help forms before reporting success. Windows accepts any installed Python 3 version that is actually `>=3.11` instead of requiring exactly Python 3.11. Linux writes the canonical `export PATH="$HOME/.local/bin:$PATH"` line without embedding literal quote characters in `PATH`.
+
 ## Development install
 
 ```bash
@@ -72,7 +92,7 @@ sric capabilities
 
 ## CLI presentation
 
-Interactive terminals display a compact subdued-green banner ordered as `SRIC Core :: v0.5.8`, `Developer: IsdarlinM`, then a brief purpose statement. Use `sric --no-color COMMAND`, `sric COMMAND --no-color`, or the standard `NO_COLOR` environment variable for plain terminal output. Presentation is kept off machine-readable stdout; see `docs/cli-presentation.md`.
+Interactive terminals display a compact subdued-green banner ordered as `SRIC Core :: v0.5.9`, `Developer: IsdarlinM`, then a brief purpose statement. Use `sric --no-color COMMAND`, `sric COMMAND --no-color`, or the standard `NO_COLOR` environment variable for plain terminal output. Presentation is kept off machine-readable stdout; see `docs/cli-presentation.md`.
 
 ## Full Web/CLI feature parity
 
@@ -113,7 +133,7 @@ python sric-core/scripts/release-standalone-ecosystem.py --root .
 python sric-core/scripts/release-ecosystem.py --root .
 ```
 
-The 0.5.8 interface regression gate walks every public command and verifies `--help`, `-h`, trailing `COMMAND help`, exact ordered CLI/Web parameter parity, and root `sric help`. Mutating/destructive semantics are validated through parser, Scope/Policy/approval gates rather than destructive execution merely for coverage.
+The 0.5.9 installer regression gate verifies the Linux PATH contract, Windows Python selection, dependency integrity checks, shared Web import probes and all root help forms. The existing exhaustive interface gate continues to walk every public command and verify CLI/Web parameter parity.
 
 Machine-readable evidence is written below `build/release-evidence/`. A release requires PASS tied to the exact source commit/tree.
 
