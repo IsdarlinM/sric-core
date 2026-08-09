@@ -1,7 +1,7 @@
 # Security Research Intelligence Core (SRIC)
 
 ```text
-SRIC Core :: v0.5.5
+SRIC Core :: v0.5.6
 Developer: IsdarlinM
 
 Evidence-native shared core for security research intelligence.
@@ -55,7 +55,8 @@ An installed but incompatible product is reported as present but does not publis
 - compatibility-aware first-party Capability Registry;
 - shared Standalone Product Contract gate and ecosystem standalone conformance gate;
 - shared professional CLI presentation with subdued green banners, Rich help and `--no-color`/`NO_COLOR` support;
-- shared Web Command Console that derives its command catalog from the installed Typer CLI and provides controlled Web/CLI capability parity without exposing an operating-system shell.
+- shared Web Command Console with fixed-runner execution and no operating-system shell;
+- shared **Web Feature Workbench** that derives every public feature and every CLI argument/option from the installed Typer tree and renders structured responsive forms, approval controls, live jobs and output.
 
 ## Development install
 
@@ -69,17 +70,19 @@ sric capabilities
 
 ## CLI presentation
 
-Interactive terminals display a compact subdued-green banner ordered as `SRIC Core :: v0.5.5`, `Developer: IsdarlinM`, then a brief purpose statement. Use `sric --no-color COMMAND`, `sric COMMAND --no-color`, or the standard `NO_COLOR` environment variable for plain terminal output. Presentation is kept off machine-readable stdout; see `docs/cli-presentation.md`.
+Interactive terminals display a compact subdued-green banner ordered as `SRIC Core :: v0.5.6`, `Developer: IsdarlinM`, then a brief purpose statement. Use `sric --no-color COMMAND`, `sric COMMAND --no-color`, or the standard `NO_COLOR` environment variable for plain terminal output. Presentation is kept off machine-readable stdout; see `docs/cli-presentation.md`.
 
-## Web/CLI parity
+## Full Web/CLI feature parity
 
-`sric web` exposes the Web Command Console at `/console`; the root Web URL redirects there. The catalog is generated from the installed Typer command tree, so new public CLI commands become visible to the Web console without maintaining a second hand-written feature list.
+`sric web` now opens the full Web Feature Workbench at `/workbench`. `/console` remains available as an advanced argv-oriented console.
 
-The console is deliberately **not** an operating-system shell. The browser submits an exact CLI command plus an argv array. SRIC launches only the fixed `sric.web_console_runner` with `shell=False`; the browser cannot select an executable or execute shell metacharacters. Mutating commands require explicit approval, destructive command names require a typed approval phrase, and the `web` command is context-only because the server is already running.
+The Workbench is generated from the same installed Typer command tree as the CLI. Each public command receives a structured Web feature definition and **every CLI parameter is represented in the same order**, including positional arguments, options, flags, paired boolean flags, repeated/count options, variadic values, required state, defaults, help text and sensitive-field handling. The `/api/v1/workbench/coverage` contract reports a parity failure if a CLI command or parameter disappears from Web representation.
 
-Jobs are isolated in subprocesses, limited to two concurrent executions by default, capped at 30 minutes and 1 MB of retained output, cancellable, and streamed to the browser with SSE. Arguments and output pass through secret redaction before they are retained by the in-memory console job view. A per-process anti-CSRF token is required for command submission and cancellation.
+The browser still does not receive an operating-system shell. Structured Web forms are serialized to an argv array and submitted to the same fixed Python runner used by `/console`, with `shell=False`, disabled stdin, secret redaction, bounded execution, SSE output, cancellation and the existing mutation/destructive approval gates. Product Scope/Policy/Rate/Approval controls remain authoritative.
 
-See `docs/web/cli-parity.md` for the API and security contract.
+The interface is responsive: desktop uses feature catalog + runner + jobs panels; mobile exposes those views through compact navigation instead of forcing a desktop command grid onto a small screen.
+
+See `docs/web/feature-workbench.md` and `docs/web/cli-parity.md`.
 
 ## Updates
 
@@ -131,6 +134,8 @@ Integrated release train:
 ```bash
 python sric-core/scripts/release-ecosystem.py --root .
 ```
+
+The 0.5.6 regression suite adds an exhaustive CLI/Web contract: every public command is invoked with `--help`, each option/required argument is checked against help output, and the complete command/parameter tree is compared against the structured Web catalog. Mutating/destructive semantics are validated through approval/policy gates rather than performing destructive actions merely for test coverage.
 
 Machine-readable evidence is written below `build/release-evidence/`. A release requires PASS tied to the exact source commit/tree.
 

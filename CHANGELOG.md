@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.5.6 - 2026-08-09
+- Added the shared Web Feature Workbench at `/workbench`, providing structured responsive forms for every public CLI command and argument while retaining `/console` as an advanced argv-oriented surface.
+- Added a generated CLI/Web feature schema covering positional arguments, options, flags, paired boolean flags, count/repeated options, multiplicity, arity, required/default/type/help metadata and sensitive-field classification.
+- Added `/api/v1/workbench/catalog` and `/api/v1/workbench/coverage` with an exact command/parameter parity contract derived from the installed Typer tree.
+- Reused the fixed Web console runner, `shell=False`, disabled stdin, CSRF token, secret redaction, mutation/destructive approval gates, bounded jobs, cancellation and SSE output instead of duplicating product execution logic.
+- Made the SRIC Web root open the Workbench and extended the restrictive same-origin CSP to Workbench assets and connections.
+- Added exhaustive unit/security/E2E regression coverage that compares every public CLI command and ordered parameter with Web representation and invokes command help to verify every documented option/required argument remains reachable.
+- Added responsive Features / Runner / Jobs mobile navigation and documented the rule that destructive actions are gate-tested rather than executed merely for coverage.
+
 ## 0.5.5 - 2026-08-08
 - Made the official Sentinel Forge update channel zero-config: `sric update`, `sric update --check`, and `sric update --force` no longer require user-supplied manifest/key arguments.
 - Added fixed official repository mapping and immutable GitHub commit update metadata; remote channel data cannot select arbitrary repositories, executables, install commands, or hosts.
