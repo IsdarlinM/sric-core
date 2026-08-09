@@ -1,7 +1,7 @@
 # Security Research Intelligence Core (SRIC)
 
 ```text
-SRIC Core :: v0.5.2
+SRIC Core :: v0.5.3
 Developer: IsdarlinM
 
 Evidence-native shared core for security research intelligence.
@@ -50,7 +50,7 @@ An installed but incompatible product is reported as present but does not publis
 - role-separated Cartographer, Historian, Security Analyst, Validator, Skeptic, Evidence Agent and Orchestrator primitives;
 - Secret Vault abstraction;
 - versioned safety/AI evals;
-- signed Ed25519/SHA-256 wheel update primitive;
+- signed Ed25519/SHA-256 wheel update primitive with safe same-version `--force` reinstall support;
 - compatibility-aware first-party Capability Registry;
 - shared Standalone Product Contract gate and ecosystem standalone conformance gate;
 - shared professional CLI presentation with subdued green banners, Rich help and `--no-color`/`NO_COLOR` support.
@@ -67,7 +67,19 @@ sric capabilities
 
 ## CLI presentation
 
-Interactive terminals display a compact subdued-green banner ordered as `SRIC Core :: v0.5.2`, `Developer: IsdarlinM`, then a brief purpose statement. Use `sric --no-color COMMAND`, `sric COMMAND --no-color`, or the standard `NO_COLOR` environment variable for plain terminal output. Presentation is kept off machine-readable stdout; see `docs/cli-presentation.md`.
+Interactive terminals display a compact subdued-green banner ordered as `SRIC Core :: v0.5.3`, `Developer: IsdarlinM`, then a brief purpose statement. Use `sric --no-color COMMAND`, `sric COMMAND --no-color`, or the standard `NO_COLOR` environment variable for plain terminal output. Presentation is kept off machine-readable stdout; see `docs/cli-presentation.md`.
+
+## Signed updates
+
+The production updater accepts only a trusted Ed25519-signed manifest and a SHA-256 verified wheel; it never uses blind `git pull`. A release channel can be supplied with `--manifest`/`--public-key` or configured through `SRIC_RELEASE_MANIFEST_URL` and `SRIC_RELEASE_PUBLIC_KEY`.
+
+```bash
+sric update --check --manifest release.json --public-key release.pub.pem
+sric update --manifest release.json --public-key release.pub.pem
+sric update --force --manifest release.json --public-key release.pub.pem
+```
+
+`--force` reinstalls the selected signed release even when that same version is already installed. It may install a newer signed version, but never downgrades. `--check` and `--force` cannot be combined. A default trust root is intentionally not embedded until the official signing channel is published.
 
 ## Validation
 

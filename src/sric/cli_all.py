@@ -7,6 +7,7 @@ from . import cli as _base_cli
 from . import cli_capabilities as _cli_capabilities  # noqa: F401
 from .cli_style import CLIBrand, configure_cli_context, no_color_option, run_branded_cli
 from .cli_vnext import _normalize_trailing_help, app
+from . import cli_update as _cli_update  # noqa: F401,E402
 
 __all__ = ["BRAND", "app", "run"]
 
