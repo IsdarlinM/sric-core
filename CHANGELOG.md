@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.5.3 - 2026-08-08
+- Added `update --force` as an explicit reinstall mode for a signed release, including same-version reinstalls via pip `--force-reinstall`.
+- Kept downgrade protection: `--force` may install the same or a newer signed version, never an older version.
+- Made `--check` and `--force` mutually exclusive and exposed `same_version`, `forced` and `installed` in update status output.
+- Preserved Ed25519 manifest verification, SHA-256 wheel verification, state backup and rollback behavior.
+- Same-version forced reinstalls use the verified target wheel as the package recovery artifact; normal upgrades still require verified rollback metadata.
+- Added security and CLI regression coverage for same-version no-op, force reinstall, pip force flag, downgrade rejection and conflicting flags.
+
 ## 0.5.2 - 2026-08-08
 - Added shared Sentinel Forge CLI branding primitives with the canonical `Tool :: vX.X.X`, `Developer: IsdarlinM`, description ordering.
 - Added a subdued green interactive banner rendered on stderr so redirected and machine-readable stdout remains clean.
