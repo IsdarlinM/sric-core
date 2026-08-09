@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.5.4 - 2026-08-08
+- Added a shared Web Command Console that derives its catalog from the installed Typer command tree, keeping Web capability discovery aligned with the public CLI.
+- Added fixed-module subprocess execution through `sric.web_console_runner` with `shell=False`, disabled stdin and no browser-controlled executable selection.
+- Added explicit approval gates for mutating commands and typed approval phrases for destructive command names; existing product Scope/Policy/rate/approval gates remain authoritative.
+- Added per-process anti-CSRF protection for command submission/cancellation, argument/output secret redaction, ANSI/control-character stripping and bounded retained output/runtime/concurrency defaults.
+- Added cancellable in-memory console jobs with Server-Sent Events for real-time output and status.
+- Added a responsive same-origin `/console` UI and routed `sric web` to it without exposing an operating-system shell.
+- Added unit and security regression coverage for real command discovery, nested commands, secret redaction, mutation approval, recursive-Web rejection and a real `sric version` execution through the fixed runner.
+
 ## 0.5.3 - 2026-08-08
 - Added `update --force` as an explicit reinstall mode for a signed release, including same-version reinstalls via pip `--force-reinstall`.
 - Kept downgrade protection: `--force` may install the same or a newer signed version, never an older version.

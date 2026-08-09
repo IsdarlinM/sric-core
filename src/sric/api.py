@@ -7,33 +7,56 @@ from typing import Any
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, StreamingResponse
+from fastapi.responses import JSONResponse, RedirectResponse, StreamingResponse
 
 from . import __version__
 from .graph import TemporalGraph
 from .jobs import JobEngine
 from .notebook import ResearchNotebook
 from .query import SecurityResearchGraphQuery
+from .web_console import WebConsoleConfig, mount_web_console
 from .workspace import Workspace
 
 
 def create_app(workspace: Path | None = None) -> FastAPI:
-    app = FastAPI(title="SRIC Local API", version=__version__, docs_url="/docs", redoc_url=None)
+    app = FastAPI(
+        title="SRIC Local API",
+        version=__version__,
+        docs_url="/docs",
+        redoc_url=None,
+    )
     app.add_middleware(
         CORSMiddleware,
         allow_origins=["http://127.0.0.1", "http://localhost"],
         allow_credentials=False,
-        allow_methods=["GET"],
-        allow_headers=["Content-Type", "Authorization"],
+        allow_methods=["GET", "POST"],
+        allow_headers=[
+            "Content-Type",
+            "Authorization",
+            "X-Sentinel-Console-Token",
+        ],
     )
 
     @app.middleware("http")
     async def security_headers(request: Any, call_next: Any) -> Any:
         response = await call_next(request)
-        response.headers["Content-Security-Policy"] = "default-src 'none'; frame-ancestors 'none'"
+        if request.url.path.startswith("/console"):
+            response.headers["Content-Security-Policy"] = (
+                "default-src 'self'; script-src 'self'; style-src 'self'; "
+                "connect-src 'self'; object-src 'none'; base-uri 'none'; "
+                "frame-ancestors 'none'"
+            )
+        else:
+            response.headers["Content-Security-Policy"] = (
+                "default-src 'none'; frame-ancestors 'none'"
+            )
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["Referrer-Policy"] = "no-referrer"
         return response
+
+    @app.get("/", include_in_schema=False)
+    async def root() -> RedirectResponse:
+        return RedirectResponse("/console")
 
     @app.get("/health")
     async def health() -> dict[str, str]:
@@ -57,7 +80,11 @@ def create_app(workspace: Path | None = None) -> FastAPI:
             return graph.explain(object_id)
 
         @app.get("/graph/path")
-        async def graph_path(source: str, target: str, max_depth: int = 8) -> dict[str, Any]:
+        async def graph_path(
+            source: str,
+            target: str,
+            max_depth: int = 8,
+        ) -> dict[str, Any]:
             return graph.path(source, target, max_depth=max_depth)
 
         @app.get("/workspace/integrity")
@@ -77,14 +104,21 @@ def create_app(workspace: Path | None = None) -> FastAPI:
             return [x.model_dump(mode="json") for x in jobs.list()]
 
         @app.get("/jobs/events")
-        async def job_events(cursor: int = 0, once: bool = False) -> StreamingResponse:
-            """Stream persisted job events as SSE; `once` is useful for deterministic clients/tests."""
+        async def job_events(
+            cursor: int = 0,
+            once: bool = False,
+        ) -> StreamingResponse:
+            """Stream persisted job events as SSE; `once` supports deterministic tests."""
+
             async def stream() -> Any:
                 current = max(0, cursor)
                 while True:
                     events = jobs.all_events(current)
                     for event in events:
-                        payload = json.dumps(event.model_dump(mode="json"), default=str)
+                        payload = json.dumps(
+                            event.model_dump(mode="json"),
+                            default=str,
+                        )
                         yield f"id: {current}\nevent: job\ndata: {payload}\n\n"
                         current += 1
                     if once:
@@ -92,11 +126,29 @@ def create_app(workspace: Path | None = None) -> FastAPI:
                             yield "event: heartbeat\ndata: {}\n\n"
                         break
                     await asyncio.sleep(1.0)
-            return StreamingResponse(stream(), media_type="text/event-stream", headers={"Cache-Control": "no-store", "X-Accel-Buffering": "no"})
+
+            return StreamingResponse(
+                stream(),
+                media_type="text/event-stream",
+                headers={
+                    "Cache-Control": "no-store",
+                    "X-Accel-Buffering": "no",
+                },
+            )
 
         @app.get("/notebook")
         async def list_notebook() -> list[dict[str, Any]]:
             return [x.model_dump(mode="json") for x in notebook.list()]
+
+    mount_web_console(
+        app,
+        WebConsoleConfig(
+            product="sric-core",
+            display_name="SRIC Core",
+            cli_module="sric.cli_all",
+            version=__version__,
+        ),
+    )
 
     @app.exception_handler(ValueError)
     async def value_error_handler(request: Any, exc: ValueError) -> JSONResponse:

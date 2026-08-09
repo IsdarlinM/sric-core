@@ -1,7 +1,7 @@
 # Security Research Intelligence Core (SRIC)
 
 ```text
-SRIC Core :: v0.5.3
+SRIC Core :: v0.5.4
 Developer: IsdarlinM
 
 Evidence-native shared core for security research intelligence.
@@ -53,7 +53,8 @@ An installed but incompatible product is reported as present but does not publis
 - signed Ed25519/SHA-256 wheel update primitive with safe same-version `--force` reinstall support;
 - compatibility-aware first-party Capability Registry;
 - shared Standalone Product Contract gate and ecosystem standalone conformance gate;
-- shared professional CLI presentation with subdued green banners, Rich help and `--no-color`/`NO_COLOR` support.
+- shared professional CLI presentation with subdued green banners, Rich help and `--no-color`/`NO_COLOR` support;
+- shared Web Command Console that derives its command catalog from the installed Typer CLI and provides controlled Web/CLI capability parity without exposing an operating-system shell.
 
 ## Development install
 
@@ -67,7 +68,17 @@ sric capabilities
 
 ## CLI presentation
 
-Interactive terminals display a compact subdued-green banner ordered as `SRIC Core :: v0.5.3`, `Developer: IsdarlinM`, then a brief purpose statement. Use `sric --no-color COMMAND`, `sric COMMAND --no-color`, or the standard `NO_COLOR` environment variable for plain terminal output. Presentation is kept off machine-readable stdout; see `docs/cli-presentation.md`.
+Interactive terminals display a compact subdued-green banner ordered as `SRIC Core :: v0.5.4`, `Developer: IsdarlinM`, then a brief purpose statement. Use `sric --no-color COMMAND`, `sric COMMAND --no-color`, or the standard `NO_COLOR` environment variable for plain terminal output. Presentation is kept off machine-readable stdout; see `docs/cli-presentation.md`.
+
+## Web/CLI parity
+
+` sric web ` now exposes the Web Command Console at `/console`; the root Web URL redirects there. The catalog is generated from the installed Typer command tree, so new public CLI commands become visible to the Web console without maintaining a second hand-written feature list.
+
+The console is deliberately **not** an operating-system shell. The browser submits an exact CLI command plus an argv array. SRIC launches only the fixed `sric.web_console_runner` with `shell=False`; the browser cannot select an executable or execute shell metacharacters. Mutating commands require explicit approval, destructive command names require a typed approval phrase, and the `web` command is context-only because the server is already running.
+
+Jobs are isolated in subprocesses, limited to two concurrent executions by default, capped at 30 minutes and 1 MB of retained output, cancellable, and streamed to the browser with SSE. Arguments and output pass through secret redaction before they are retained by the in-memory console job view. A per-process anti-CSRF token is required for command submission and cancellation.
+
+See `docs/web/cli-parity.md` for the API and security contract.
 
 ## Signed updates
 
