@@ -55,11 +55,15 @@ if exist "%FIRST_PARTY%" (
 >"%BIN_DIR%\%CMD%.cmd" echo @"%VENV%\Scripts\%CMD%.exe" %%*
 "%VENV%\Scripts\python.exe" -m sric.install_path "%BIN_DIR%" || exit /b 3
 
+rem Allow the user-facing doctor check to render the banner once. Suppress it
+rem for internal capability/help smokes so installation output stays compact.
 "%VENV%\Scripts\%CMD%.exe" doctor || exit /b 1
+set "SENTINEL_BANNER=off"
 "%VENV%\Scripts\%CMD%.exe" capabilities || exit /b 1
 "%VENV%\Scripts\%CMD%.exe" --help >nul || exit /b 1
 "%VENV%\Scripts\%CMD%.exe" -h >nul || exit /b 1
 "%VENV%\Scripts\%CMD%.exe" help >nul || exit /b 1
+set "SENTINEL_BANNER="
 echo %PROJECT% installed/repaired successfully.
 echo Open a new Command Prompt and run: %CMD% --help
 exit /b 0
