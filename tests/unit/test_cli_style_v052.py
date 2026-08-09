@@ -4,6 +4,7 @@ import os
 
 from typer.main import get_command
 
+from sric import __version__
 from sric.cli_all import BRAND, app
 from sric.cli_style import CLIBrand, build_banner, color_enabled, normalize_no_color_argv
 
@@ -11,9 +12,15 @@ from sric.cli_style import CLIBrand, build_banner, color_enabled, normalize_no_c
 def test_banner_uses_canonical_identity_order() -> None:
     banner = build_banner(BRAND)
     lines = banner.splitlines()
-    product_index = next(i for i, line in enumerate(lines) if "SRIC Core :: v0.5.3" in line)
-    developer_index = next(i for i, line in enumerate(lines) if "Developer: IsdarlinM" in line)
-    description_index = next(i for i, line in enumerate(lines) if "Evidence-native shared core" in line)
+    product_index = next(
+        i for i, line in enumerate(lines) if f"SRIC Core :: v{__version__}" in line
+    )
+    developer_index = next(
+        i for i, line in enumerate(lines) if "Developer: IsdarlinM" in line
+    )
+    description_index = next(
+        i for i, line in enumerate(lines) if "Evidence-native shared core" in line
+    )
     assert product_index < developer_index < description_index
     assert "IsdarlinM ::" not in banner
     assert "\x1b[" not in banner
@@ -29,12 +36,18 @@ def test_banner_matches_requested_ascii_contract() -> None:
     )
     assert "| FossilScope :: v0.5.3" in banner
     assert "| Developer: IsdarlinM" in banner
-    assert "| Map historical attack surface and separate history from current exposure." in banner
+    assert (
+        "| Map historical attack surface and separate history from current exposure."
+        in banner
+    )
     assert banner.startswith("+") and banner.endswith("+")
 
 
 def test_banner_wraps_long_descriptions_without_truncation() -> None:
-    description = "A deliberately long description that remains readable instead of breaking the CLI banner layout on narrow terminals."
+    description = (
+        "A deliberately long description that remains readable instead of breaking "
+        "the CLI banner layout on narrow terminals."
+    )
     banner = build_banner(CLIBrand("Example", description, "1.2.3"), width=64)
     assert "deliberately long description" in banner
     assert "breaking the CLI banner" in banner
