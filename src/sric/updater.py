@@ -44,10 +44,38 @@ class UpdateCheck:
     installed: bool = False
 
 
-def _semver_tuple(value: str) -> tuple[int, int, int]:
-    core = value.split("-", 1)[0].split("+", 1)[0]
+def _semver_parts(value: str) -> tuple[tuple[int, int, int], tuple[str, ...] | None]:
+    precedence = value.split("+", 1)[0]
+    core, separator, prerelease = precedence.partition("-")
     major, minor, patch = core.split(".")
-    return int(major), int(minor), int(patch)
+    identifiers = tuple(prerelease.split(".")) if separator else None
+    return (int(major), int(minor), int(patch)), identifiers
+
+
+def _compare_semver(left: str, right: str) -> int:
+    left_core, left_pre = _semver_parts(left)
+    right_core, right_pre = _semver_parts(right)
+    if left_core != right_core:
+        return 1 if left_core > right_core else -1
+    if left_pre is None and right_pre is None:
+        return 0
+    if left_pre is None:
+        return 1
+    if right_pre is None:
+        return -1
+    for left_id, right_id in zip(left_pre, right_pre):
+        if left_id == right_id:
+            continue
+        left_numeric = left_id.isdigit()
+        right_numeric = right_id.isdigit()
+        if left_numeric and right_numeric:
+            return 1 if int(left_id) > int(right_id) else -1
+        if left_numeric != right_numeric:
+            return -1 if left_numeric else 1
+        return 1 if left_id > right_id else -1
+    if len(left_pre) == len(right_pre):
+        return 0
+    return 1 if len(left_pre) > len(right_pre) else -1
 
 
 def _read_source(source: str, *, max_bytes: int) -> bytes:
@@ -84,13 +112,12 @@ def load_and_verify_manifest(
 
 
 def check_update(manifest: ReleaseManifest, current_version: str) -> UpdateCheck:
-    current = _semver_tuple(current_version)
-    available = _semver_tuple(manifest.version)
+    comparison = _compare_semver(manifest.version, current_version)
     return UpdateCheck(
         current_version=current_version,
         available_version=manifest.version,
-        update_available=available > current,
-        same_version=available == current,
+        update_available=comparison > 0,
+        same_version=comparison == 0,
         product=manifest.product,
         artifact=manifest.artifact,
     )
@@ -206,10 +233,9 @@ def perform_update(
 
     manifest = load_and_verify_manifest(manifest_source, public_key_path, expected_product)
     status = check_update(manifest, current_version)
-    current = _semver_tuple(current_version)
-    available = _semver_tuple(manifest.version)
+    comparison = _compare_semver(manifest.version, current_version)
 
-    if force and available < current:
+    if force and comparison < 0:
         raise ValueError(
             "forced update does not permit downgrades; use the explicit rollback/recovery workflow"
         )
