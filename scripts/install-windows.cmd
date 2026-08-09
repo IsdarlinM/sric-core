@@ -30,8 +30,18 @@ if not defined PY_CMD (
 
 if not exist "%INSTALL_ROOT%" mkdir "%INSTALL_ROOT%"
 if not exist "%BIN_DIR%" mkdir "%BIN_DIR%"
+if exist "%VENV%\Scripts\python.exe" (
+  "%VENV%\Scripts\python.exe" -c "import sys; raise SystemExit(0 if sys.version_info >= (3,11) else 1)" >nul 2>&1
+  if errorlevel 1 (
+    echo Rebuilding obsolete or broken runtime environment: %VENV%
+    rmdir /s /q "%VENV%" || exit /b 3
+  )
+) else if exist "%VENV%" (
+  echo Rebuilding incomplete runtime environment: %VENV%
+  rmdir /s /q "%VENV%" || exit /b 3
+)
 if not exist "%VENV%\Scripts\python.exe" (
-  %PY_CMD% -m venv "%VENV%" || exit /b 1
+  %PY_CMD% -m venv "%VENV%" || (echo Failed to create isolated Python environment.& exit /b 3)
 )
 
 "%VENV%\Scripts\python.exe" -m pip install --upgrade pip setuptools wheel || (echo Failed to bootstrap pip/setuptools/wheel.& exit /b 3)
@@ -43,15 +53,7 @@ if exist "%FIRST_PARTY%" (
 "%VENV%\Scripts\python.exe" -c "import sric; import sric.web_console; import sric.web_workbench" || (echo SRIC Core import integrity check failed.& exit /b 3)
 
 >"%BIN_DIR%\%CMD%.cmd" echo @"%VENV%\Scripts\%CMD%.exe" %%*
-for /f "tokens=2,*" %%A in ('reg query HKCU\Environment /v Path 2^>nul ^| findstr /I "Path"') do set "USER_PATH=%%B"
-echo ;%USER_PATH%; | find /I ";%BIN_DIR%;" >nul
-if errorlevel 1 (
-  if defined USER_PATH (
-    setx PATH "%USER_PATH%;%BIN_DIR%" >nul
-  ) else (
-    setx PATH "%BIN_DIR%" >nul
-  )
-)
+"%VENV%\Scripts\python.exe" -m sric.install_path "%BIN_DIR%" || exit /b 3
 
 "%VENV%\Scripts\%CMD%.exe" doctor || exit /b 1
 "%VENV%\Scripts\%CMD%.exe" capabilities || exit /b 1
