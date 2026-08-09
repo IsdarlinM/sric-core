@@ -15,6 +15,7 @@ from .jobs import JobEngine
 from .notebook import ResearchNotebook
 from .query import SecurityResearchGraphQuery
 from .web_console import WebConsoleConfig, mount_web_console
+from .web_workbench import mount_feature_workbench
 from .workspace import Workspace
 
 
@@ -40,7 +41,7 @@ def create_app(workspace: Path | None = None) -> FastAPI:
     @app.middleware("http")
     async def security_headers(request: Any, call_next: Any) -> Any:
         response = await call_next(request)
-        if request.url.path.startswith("/console"):
+        if request.url.path.startswith(("/console", "/workbench")):
             response.headers["Content-Security-Policy"] = (
                 "default-src 'self'; script-src 'self'; style-src 'self'; "
                 "connect-src 'self'; object-src 'none'; base-uri 'none'; "
@@ -56,7 +57,7 @@ def create_app(workspace: Path | None = None) -> FastAPI:
 
     @app.get("/", include_in_schema=False)
     async def root() -> RedirectResponse:
-        return RedirectResponse("/console")
+        return RedirectResponse("/workbench")
 
     @app.get("/health")
     async def health() -> dict[str, str]:
@@ -80,11 +81,7 @@ def create_app(workspace: Path | None = None) -> FastAPI:
             return graph.explain(object_id)
 
         @app.get("/graph/path")
-        async def graph_path(
-            source: str,
-            target: str,
-            max_depth: int = 8,
-        ) -> dict[str, Any]:
+        async def graph_path(source: str, target: str, max_depth: int = 8) -> dict[str, Any]:
             return graph.path(source, target, max_depth=max_depth)
 
         @app.get("/workspace/integrity")
@@ -104,21 +101,13 @@ def create_app(workspace: Path | None = None) -> FastAPI:
             return [x.model_dump(mode="json") for x in jobs.list()]
 
         @app.get("/jobs/events")
-        async def job_events(
-            cursor: int = 0,
-            once: bool = False,
-        ) -> StreamingResponse:
-            """Stream persisted job events as SSE; `once` supports deterministic tests."""
-
+        async def job_events(cursor: int = 0, once: bool = False) -> StreamingResponse:
             async def stream() -> Any:
                 current = max(0, cursor)
                 while True:
                     events = jobs.all_events(current)
                     for event in events:
-                        payload = json.dumps(
-                            event.model_dump(mode="json"),
-                            default=str,
-                        )
+                        payload = json.dumps(event.model_dump(mode="json"), default=str)
                         yield f"id: {current}\nevent: job\ndata: {payload}\n\n"
                         current += 1
                     if once:
@@ -130,25 +119,21 @@ def create_app(workspace: Path | None = None) -> FastAPI:
             return StreamingResponse(
                 stream(),
                 media_type="text/event-stream",
-                headers={
-                    "Cache-Control": "no-store",
-                    "X-Accel-Buffering": "no",
-                },
+                headers={"Cache-Control": "no-store", "X-Accel-Buffering": "no"},
             )
 
         @app.get("/notebook")
         async def list_notebook() -> list[dict[str, Any]]:
             return [x.model_dump(mode="json") for x in notebook.list()]
 
-    mount_web_console(
-        app,
-        WebConsoleConfig(
-            product="sric-core",
-            display_name="SRIC Core",
-            cli_module="sric.cli_all",
-            version=__version__,
-        ),
+    console_config = WebConsoleConfig(
+        product="sric-core",
+        display_name="SRIC Core",
+        cli_module="sric.cli_all",
+        version=__version__,
     )
+    console_manager = mount_web_console(app, console_config)
+    mount_feature_workbench(app, console_config, console_manager)
 
     @app.exception_handler(ValueError)
     async def value_error_handler(request: Any, exc: ValueError) -> JSONResponse:
