@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.5.10 - 2026-08-09
+- Centralized safe Windows user-PATH updates in `sric.install_path` using `winreg`, preserving the registry value type and broadcasting `WM_SETTINGCHANGE`; installers no longer use `setx PATH`.
+- Linux/Termux now validates the interpreter inside an existing virtual environment and rebuilds only the isolated runtime venv when it is stale, incomplete or broken; workspaces, configuration and evidence remain untouched.
+- Termux prefers a writable `$PREFIX/bin` already present in `PATH`, making installed commands immediately reachable without relying on login-shell profile loading.
+- Linux host-Python discovery now supports an explicit `PYTHON`, then `python3`, then `python`, while still enforcing Python 3.11+.
+- Added unit coverage for idempotent/case-insensitive Windows PATH handling and standalone regressions proving venv-only repair, Termux path selection and absence of `setx`.
+
 ## 0.5.9 - 2026-08-09
 - Hardened Linux/Termux and Windows installers as idempotent repair paths with `pip`, `setuptools`, `wheel`, `pip check`, shared-Web import probes and root help smokes.
 - Fixed Linux PATH persistence so `.profile` receives `export PATH="$HOME/.local/bin:$PATH"` without literal quote characters entering the PATH value.
