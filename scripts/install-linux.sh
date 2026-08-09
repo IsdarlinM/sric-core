@@ -91,10 +91,12 @@ case ":${PATH:-}:" in
     ;;
 esac
 
+# The user-facing health check may render the product banner once. Internal
+# capability/help smokes suppress it so installation output stays compact.
 "$VENV/bin/$CMD" doctor
-"$VENV/bin/$CMD" capabilities
-"$VENV/bin/$CMD" --help >/dev/null
-"$VENV/bin/$CMD" -h >/dev/null
-"$VENV/bin/$CMD" help >/dev/null
+SENTINEL_BANNER=off "$VENV/bin/$CMD" capabilities
+SENTINEL_BANNER=off "$VENV/bin/$CMD" --help >/dev/null
+SENTINEL_BANNER=off "$VENV/bin/$CMD" -h >/dev/null
+SENTINEL_BANNER=off "$VENV/bin/$CMD" help >/dev/null
 printf '%s installed/repaired successfully.\n' "$PROJECT"
 printf 'Command: %s\n' "$CMD"
