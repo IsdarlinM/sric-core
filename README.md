@@ -1,7 +1,7 @@
 # Security Research Intelligence Core (SRIC)
 
 ```text
-SRIC Core :: v0.5.4
+SRIC Core :: v0.5.5
 Developer: IsdarlinM
 
 Evidence-native shared core for security research intelligence.
@@ -50,7 +50,8 @@ An installed but incompatible product is reported as present but does not publis
 - role-separated Cartographer, Historian, Security Analyst, Validator, Skeptic, Evidence Agent and Orchestrator primitives;
 - Secret Vault abstraction;
 - versioned safety/AI evals;
-- signed Ed25519/SHA-256 wheel update primitive with safe same-version `--force` reinstall support;
+- zero-config official GitHub update channel with immutable signature-verified commit snapshots, same-version `--force` reinstall, rollback and state backup;
+- explicit custom Ed25519/SHA-256 wheel update override for private release channels;
 - compatibility-aware first-party Capability Registry;
 - shared Standalone Product Contract gate and ecosystem standalone conformance gate;
 - shared professional CLI presentation with subdued green banners, Rich help and `--no-color`/`NO_COLOR` support;
@@ -68,11 +69,11 @@ sric capabilities
 
 ## CLI presentation
 
-Interactive terminals display a compact subdued-green banner ordered as `SRIC Core :: v0.5.4`, `Developer: IsdarlinM`, then a brief purpose statement. Use `sric --no-color COMMAND`, `sric COMMAND --no-color`, or the standard `NO_COLOR` environment variable for plain terminal output. Presentation is kept off machine-readable stdout; see `docs/cli-presentation.md`.
+Interactive terminals display a compact subdued-green banner ordered as `SRIC Core :: v0.5.5`, `Developer: IsdarlinM`, then a brief purpose statement. Use `sric --no-color COMMAND`, `sric COMMAND --no-color`, or the standard `NO_COLOR` environment variable for plain terminal output. Presentation is kept off machine-readable stdout; see `docs/cli-presentation.md`.
 
 ## Web/CLI parity
 
-` sric web ` now exposes the Web Command Console at `/console`; the root Web URL redirects there. The catalog is generated from the installed Typer command tree, so new public CLI commands become visible to the Web console without maintaining a second hand-written feature list.
+`sric web` exposes the Web Command Console at `/console`; the root Web URL redirects there. The catalog is generated from the installed Typer command tree, so new public CLI commands become visible to the Web console without maintaining a second hand-written feature list.
 
 The console is deliberately **not** an operating-system shell. The browser submits an exact CLI command plus an argv array. SRIC launches only the fixed `sric.web_console_runner` with `shell=False`; the browser cannot select an executable or execute shell metacharacters. Mutating commands require explicit approval, destructive command names require a typed approval phrase, and the `web` command is context-only because the server is already running.
 
@@ -80,17 +81,30 @@ Jobs are isolated in subprocesses, limited to two concurrent executions by defau
 
 See `docs/web/cli-parity.md` for the API and security contract.
 
-## Signed updates
+## Updates
 
-The production updater accepts only a trusted Ed25519-signed manifest and a SHA-256 verified wheel; it never uses blind `git pull`. A release channel can be supplied with `--manifest`/`--public-key` or configured through `SRIC_RELEASE_MANIFEST_URL` and `SRIC_RELEASE_PUBLIC_KEY`.
+The normal user path is zero-config:
 
 ```bash
-sric update --check --manifest release.json --public-key release.pub.pem
+sric update --check
+sric update
+sric update --force
+```
+
+No manifest or public-key argument is required for the official channel. SRIC accepts only the hard-coded official repository for the selected product, resolves an immutable commit, requires GitHub to report that commit as signature-verified, downloads that exact source snapshot, rejects unsafe ZIP content, verifies the embedded `pyproject.toml` package name/version, backs up state, installs without a shell, and verifies the resulting installed distribution.
+
+`--force` reinstalls the official selected release even when that exact version is already installed. It may install a newer release but never downgrades. `--check` and `--force` cannot be combined. Normal upgrades require rollback metadata; a same-version forced reinstall uses the verified target snapshot as its recovery package.
+
+Advanced/private channels remain available by explicitly supplying both a signed manifest and Ed25519 public key (or both corresponding environment variables):
+
+```bash
 sric update --manifest release.json --public-key release.pub.pem
 sric update --force --manifest release.json --public-key release.pub.pem
 ```
 
-`--force` reinstalls the selected signed release even when that same version is already installed. It may install a newer signed version, but never downgrades. `--check` and `--force` cannot be combined. A default trust root is intentionally not embedded until the official signing channel is published.
+Custom channels preserve the Ed25519 manifest + SHA-256 wheel verification contract. The updater never falls back to blind `git pull`.
+
+See `docs/release/official-update-channel.md`.
 
 ## Validation
 
