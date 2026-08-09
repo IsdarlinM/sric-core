@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.5.5 - 2026-08-08
+- Made the official Sentinel Forge update channel zero-config: `sric update`, `sric update --check`, and `sric update --force` no longer require user-supplied manifest/key arguments.
+- Added fixed official repository mapping and immutable GitHub commit update metadata; remote channel data cannot select arbitrary repositories, executables, install commands, or hosts.
+- Require official release commits to be reported by GitHub as signature-verified before installation.
+- Added bounded source-ZIP validation for traversal, symlinks, entry count, uncompressed size, repository root, package name, package version, and expected commit identity.
+- Preserved same-version `--force` reinstall, downgrade rejection, product-state backup, installed-version verification, and rollback semantics.
+- Kept Ed25519 manifest + SHA-256 wheel updates as an explicit custom/private-channel override that still requires both manifest and public key.
+- Added focused regression coverage for zero-config selection, force reinstall, downgrade rejection, unsigned commit rejection, traversal, and symlink archives.
+
 ## 0.5.4 - 2026-08-08
 - Added a shared Web Command Console that derives its catalog from the installed Typer command tree, keeping Web capability discovery aligned with the public CLI.
 - Added fixed-module subprocess execution through `sric.web_console_runner` with `shell=False`, disabled stdin and no browser-controlled executable selection.
