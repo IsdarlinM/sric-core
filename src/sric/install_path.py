@@ -58,7 +58,8 @@ def ensure_windows_user_path(candidate: str) -> bool:
         WM_SETTINGCHANGE = 0x001A
         SMTO_ABORTIFHUNG = 0x0002
         result = ctypes.c_ulong()
-        ctypes.windll.user32.SendMessageTimeoutW(
+        user32 = getattr(ctypes, "windll").user32
+        user32.SendMessageTimeoutW(
             HWND_BROADCAST,
             WM_SETTINGCHANGE,
             0,
@@ -77,7 +78,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 2
     try:
         changed = ensure_windows_user_path(args[0])
-    except (OSError, RuntimeError) as exc:
+    except (OSError, RuntimeError, AttributeError) as exc:
         print(f"Failed to update user PATH safely: {exc}", file=sys.stderr)
         return 3
     print("PATH updated" if changed else "PATH already configured")
