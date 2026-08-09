@@ -1,7 +1,7 @@
 # Security Research Intelligence Core (SRIC)
 
 ```text
-SRIC Core :: v0.5.6
+SRIC Core :: v0.5.8
 Developer: IsdarlinM
 
 Evidence-native shared core for security research intelligence.
@@ -52,9 +52,11 @@ An installed but incompatible product is reported as present but does not publis
 - versioned safety/AI evals;
 - zero-config official GitHub update channel with immutable signature-verified commit snapshots, same-version `--force` reinstall, rollback and state backup;
 - explicit custom Ed25519/SHA-256 wheel update override for private release channels;
+- first-party runtime compatibility checks and signed-channel repair for stale/corrupt shared runtimes;
 - compatibility-aware first-party Capability Registry;
 - shared Standalone Product Contract gate and ecosystem standalone conformance gate;
 - shared professional CLI presentation with subdued green banners, Rich help and `--no-color`/`NO_COLOR` support;
+- complete help aliases: `sric --help`, `sric -h`, `sric help`, `sric COMMAND --help`, `sric COMMAND -h`, and `sric COMMAND help`;
 - shared Web Command Console with fixed-runner execution and no operating-system shell;
 - shared **Web Feature Workbench** that derives every public feature and every CLI argument/option from the installed Typer tree and renders structured responsive forms, approval controls, live jobs and output.
 
@@ -70,19 +72,19 @@ sric capabilities
 
 ## CLI presentation
 
-Interactive terminals display a compact subdued-green banner ordered as `SRIC Core :: v0.5.6`, `Developer: IsdarlinM`, then a brief purpose statement. Use `sric --no-color COMMAND`, `sric COMMAND --no-color`, or the standard `NO_COLOR` environment variable for plain terminal output. Presentation is kept off machine-readable stdout; see `docs/cli-presentation.md`.
+Interactive terminals display a compact subdued-green banner ordered as `SRIC Core :: v0.5.8`, `Developer: IsdarlinM`, then a brief purpose statement. Use `sric --no-color COMMAND`, `sric COMMAND --no-color`, or the standard `NO_COLOR` environment variable for plain terminal output. Presentation is kept off machine-readable stdout; see `docs/cli-presentation.md`.
 
 ## Full Web/CLI feature parity
 
-`sric web` now opens the full Web Feature Workbench at `/workbench`. `/console` remains available as an advanced argv-oriented console.
+`sric web` opens the full Web Feature Workbench at `/workbench`. `/console` remains available as an advanced argv-oriented console.
 
-The Workbench is generated from the same installed Typer command tree as the CLI. Each public command receives a structured Web feature definition and **every CLI parameter is represented in the same order**, including positional arguments, options, flags, paired boolean flags, repeated/count options, variadic values, required state, defaults, help text and sensitive-field handling. The `/api/v1/workbench/coverage` contract reports a parity failure if a CLI command or parameter disappears from Web representation.
+The Workbench is generated from the same installed Typer command tree as the CLI. Each public command receives a structured Web feature definition and every CLI parameter is represented in the same order, including positional arguments, options, flags, paired boolean flags, repeated/count options, variadic values, required state, defaults, help text and sensitive-field handling. `/api/v1/workbench/coverage` reports a parity failure if a CLI command or parameter disappears from Web representation.
 
-The browser still does not receive an operating-system shell. Structured Web forms are serialized to an argv array and submitted to the same fixed Python runner used by `/console`, with `shell=False`, disabled stdin, secret redaction, bounded execution, SSE output, cancellation and the existing mutation/destructive approval gates. Product Scope/Policy/Rate/Approval controls remain authoritative.
+The browser does not receive an operating-system shell. Structured Web forms are serialized to argv and submitted to the fixed Python runner used by `/console`, with `shell=False`, disabled stdin, secret redaction, bounded execution, SSE output, cancellation and mutation/destructive approval gates. Product Scope/Policy/Rate/Approval controls remain authoritative.
 
-The interface is responsive: desktop uses feature catalog + runner + jobs panels; mobile exposes those views through compact navigation instead of forcing a desktop command grid onto a small screen.
+The interface is responsive: desktop uses feature catalog + runner + jobs panels; mobile exposes those views through compact navigation.
 
-See `docs/web/feature-workbench.md` and `docs/web/cli-parity.md`.
+See `docs/web/feature-workbench.md`, `docs/web/cli-parity.md`, and `docs/runtime-compatibility.md`.
 
 ## Updates
 
@@ -94,48 +96,24 @@ sric update
 sric update --force
 ```
 
-No manifest or public-key argument is required for the official channel. SRIC accepts only the hard-coded official repository for the selected product, resolves an immutable commit, requires GitHub to report that commit as signature-verified, downloads that exact source snapshot, rejects unsafe ZIP content, verifies the embedded `pyproject.toml` package name/version, backs up state, installs without a shell, and verifies the resulting installed distribution.
+No manifest or public-key argument is required for the official channel. SRIC accepts only the hard-coded official repository, resolves an immutable commit, requires GitHub to report that commit as signature-verified, downloads that exact source snapshot, rejects unsafe ZIP content, verifies package name/version, backs up state, installs without a shell, and verifies the installed distribution.
 
 `--force` reinstalls the official selected release even when that exact version is already installed. It may install a newer release but never downgrades. `--check` and `--force` cannot be combined. Normal upgrades require rollback metadata; a same-version forced reinstall uses the verified target snapshot as its recovery package.
 
-Advanced/private channels remain available by explicitly supplying both a signed manifest and Ed25519 public key (or both corresponding environment variables):
-
-```bash
-sric update --manifest release.json --public-key release.pub.pem
-sric update --force --manifest release.json --public-key release.pub.pem
-```
-
-Custom channels preserve the Ed25519 manifest + SHA-256 wheel verification contract. The updater never falls back to blind `git pull`.
+Advanced/private channels remain available by explicitly supplying both a signed manifest and Ed25519 public key. Custom channels preserve the Ed25519 manifest + SHA-256 wheel verification contract. The updater never falls back to blind `git pull`.
 
 See `docs/release/official-update-channel.md`.
 
 ## Validation
 
-Standalone contract:
-
 ```bash
 python -m sric.standalone_gate --root .
-```
-
-Full repository gate:
-
-```bash
 python scripts/release-gate.py
-```
-
-Six-product standalone conformance from sibling checkouts:
-
-```bash
 python sric-core/scripts/release-standalone-ecosystem.py --root .
-```
-
-Integrated release train:
-
-```bash
 python sric-core/scripts/release-ecosystem.py --root .
 ```
 
-The 0.5.6 regression suite adds an exhaustive CLI/Web contract: every public command is invoked with `--help`, each option/required argument is checked against help output, and the complete command/parameter tree is compared against the structured Web catalog. Mutating/destructive semantics are validated through approval/policy gates rather than performing destructive actions merely for test coverage.
+The 0.5.8 interface regression gate walks every public command and verifies `--help`, `-h`, trailing `COMMAND help`, exact ordered CLI/Web parameter parity, and root `sric help`. Mutating/destructive semantics are validated through parser, Scope/Policy/approval gates rather than destructive execution merely for coverage.
 
 Machine-readable evidence is written below `build/release-evidence/`. A release requires PASS tied to the exact source commit/tree.
 

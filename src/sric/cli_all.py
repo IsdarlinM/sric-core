@@ -9,7 +9,7 @@ from .cli_style import CLIBrand, configure_cli_context, no_color_option, run_bra
 from .cli_vnext import _normalize_trailing_help, app
 from . import cli_update as _cli_update  # noqa: F401,E402
 
-__all__ = ["BRAND", "app", "run"]
+__all__ = ["BRAND", "app", "normalize_help_argv", "run"]
 
 BRAND = CLIBrand(
     product="SRIC Core",
@@ -32,7 +32,17 @@ def branded_main(
     _original_main(ctx)
 
 
+def normalize_help_argv(argv: list[str]) -> list[str]:
+    """Support `sric help` and `sric COMMAND help` as aliases for Typer help."""
+
+    normalized = list(argv)
+    if len(normalized) == 2 and normalized[1] == "help":
+        normalized[1] = "--help"
+        return normalized
+    return _normalize_trailing_help(normalized)
+
+
 def run() -> None:
     """Run the complete SRIC CLI with branded, script-safe terminal presentation."""
 
-    run_branded_cli(app, BRAND, argv_normalizer=_normalize_trailing_help)
+    run_branded_cli(app, BRAND, argv_normalizer=normalize_help_argv)

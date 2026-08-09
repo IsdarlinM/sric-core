@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.5.8 - 2026-08-09
+- Completed the public CLI help contract so `sric help` is a first-class alias for root help while preserving `sric --help`, `sric -h`, `sric COMMAND --help`, `sric COMMAND -h`, and `sric COMMAND help`.
+- Added an exhaustive E2E interface gate that walks every public command with both help flags and trailing-help normalization and compares every ordered CLI parameter with the Web Feature Workbench schema.
+- Preserved the 0.5.7 first-party runtime compatibility and signed-channel repair model unchanged.
+
 ## 0.5.7 - 2026-08-09
 - Added first-party runtime compatibility checks that validate installed package versions and required runtime modules before dependent products use shared SRIC features.
 - Added signed-channel runtime repair support for stale or same-version-corrupt first-party installations; repair never selects arbitrary packages or URLs.
