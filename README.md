@@ -1,7 +1,7 @@
 # Security Research Intelligence Core (SRIC)
 
 ```text
-SRIC Core :: v0.5.9
+SRIC Core :: v0.5.10
 Developer: IsdarlinM
 
 Evidence-native shared core for security research intelligence.
@@ -78,7 +78,9 @@ sric doctor
 sric capabilities
 ```
 
-The 0.5.9 installers are idempotent/repair-capable, bootstrap `pip`, `setuptools` and `wheel`, run `pip check`, import-probe the shared Web runtime and smoke-test all root help forms before reporting success. Windows accepts any installed Python 3 version that is actually `>=3.11` instead of requiring exactly Python 3.11. Linux writes the canonical `export PATH="$HOME/.local/bin:$PATH"` line without embedding literal quote characters in `PATH`.
+The 0.5.10 installers are idempotent and repair-capable. They validate both the selected host Python and an existing virtual-environment interpreter; an obsolete/broken runtime causes only the isolated `venv` to be rebuilt, never workspaces or configuration. They bootstrap `pip`, `setuptools` and `wheel`, run `pip check`, import-probe the shared Web runtime and smoke-test all root help forms before reporting success.
+
+On Termux, a writable `$PREFIX/bin` already present in `PATH` is preferred so the command becomes immediately reachable. Standard Linux falls back to `~/.local/bin` and persists the canonical `export PATH="$HOME/.local/bin:$PATH"` line when required. Windows accepts any Python 3 interpreter that satisfies `>=3.11`; user PATH changes are centralized in `sric.install_path`, which updates `HKCU\Environment\Path` without `setx` truncation and broadcasts `WM_SETTINGCHANGE`.
 
 ## Development install
 
@@ -92,7 +94,7 @@ sric capabilities
 
 ## CLI presentation
 
-Interactive terminals display a compact subdued-green banner ordered as `SRIC Core :: v0.5.9`, `Developer: IsdarlinM`, then a brief purpose statement. Use `sric --no-color COMMAND`, `sric COMMAND --no-color`, or the standard `NO_COLOR` environment variable for plain terminal output. Presentation is kept off machine-readable stdout; see `docs/cli-presentation.md`.
+Interactive terminals display a compact subdued-green banner ordered as `SRIC Core :: v0.5.10`, `Developer: IsdarlinM`, then a brief purpose statement. Use `sric --no-color COMMAND`, `sric COMMAND --no-color`, or the standard `NO_COLOR` environment variable for plain terminal output. Presentation is kept off machine-readable stdout; see `docs/cli-presentation.md`.
 
 ## Full Web/CLI feature parity
 
@@ -133,7 +135,7 @@ python sric-core/scripts/release-standalone-ecosystem.py --root .
 python sric-core/scripts/release-ecosystem.py --root .
 ```
 
-The 0.5.9 installer regression gate verifies the Linux PATH contract, Windows Python selection, dependency integrity checks, shared Web import probes and all root help forms. The existing exhaustive interface gate continues to walk every public command and verify CLI/Web parameter parity.
+The 0.5.10 installer regressions verify runtime recreation stays scoped to the venv, Termux `$PREFIX/bin` selection, safe Windows registry PATH handling, Windows Python selection, dependency integrity checks, shared Web import probes and help forms. The existing exhaustive interface gate continues to walk every public command and verify CLI/Web parameter parity.
 
 Machine-readable evidence is written below `build/release-evidence/`. A release requires PASS tied to the exact source commit/tree.
 
