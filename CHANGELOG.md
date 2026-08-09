@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.5.11 - 2026-08-09
+- Compact installer output now renders the product banner at most once: the user-facing `doctor` check may show it, while internal `capabilities`, `--help`, `-h`, and `help` smoke tests run with `SENTINEL_BANNER=off`.
+- Preserved normal interactive CLI branding; banner suppression is scoped to installer/automation smoke checks only.
+- Added Linux/Termux and Windows regression coverage preventing repeated installer banners.
+
 ## 0.5.10 - 2026-08-09
 - Centralized safe Windows user-PATH updates in `sric.install_path` using `winreg`, preserving the registry value type and broadcasting `WM_SETTINGCHANGE`; installers no longer use `setx PATH`.
 - Linux/Termux now validates the interpreter inside an existing virtual environment and rebuilds only the isolated runtime venv when it is stale, incomplete or broken; workspaces, configuration and evidence remain untouched.
