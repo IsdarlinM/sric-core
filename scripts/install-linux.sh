@@ -17,7 +17,7 @@ if [ "$(id -u)" = "0" ] && [ "${ALLOW_ROOT_INSTALL:-0}" != "1" ]; then
 fi
 
 PYTHON="${PYTHON:-python3}"
-"$PYTHON" -c 'import sys; raise SystemExit(0 if sys.version_info >= (3,11) else 1)' || {
+"$PYTHON" -c 'import sys; raise SystemExit(0 if sys.version_info >= (3,11) else 1)' >/dev/null 2>&1 || {
   echo "Python 3.11+ is required." >&2
   exit 2
 }
@@ -26,15 +26,32 @@ mkdir -p "$INSTALL_ROOT" "$BIN_DIR"
 if [ ! -x "$VENV/bin/python" ]; then
   "$PYTHON" -m venv "$VENV"
 fi
-"$VENV/bin/python" -m pip install --upgrade pip
+
+"$VENV/bin/python" -m pip install --upgrade pip setuptools wheel || {
+  echo "Failed to bootstrap pip/setuptools/wheel." >&2
+  exit 3
+}
 
 if [ -f "$FIRST_PARTY" ]; then
-  "$VENV/bin/python" -m pip install --upgrade -r "$FIRST_PARTY" || {
+  "$VENV/bin/python" -m pip install --upgrade -c "$CONSTRAINTS" -r "$FIRST_PARTY" || {
     echo "Failed to install Sentinel Forge first-party dependencies." >&2
     exit 3
   }
 fi
-"$VENV/bin/python" -m pip install --upgrade -c "$CONSTRAINTS" "$REPO_ROOT"
+
+"$VENV/bin/python" -m pip install --upgrade -c "$CONSTRAINTS" "$REPO_ROOT" || {
+  echo "Failed to install SRIC Core runtime." >&2
+  exit 3
+}
+"$VENV/bin/python" -m pip check || {
+  echo "Installed dependency graph is inconsistent." >&2
+  exit 3
+}
+"$VENV/bin/python" -c 'import sric; import sric.web_console; import sric.web_workbench' || {
+  echo "SRIC Core import integrity check failed." >&2
+  exit 3
+}
+
 ln -sfn "$VENV/bin/$CMD" "$BIN_DIR/$CMD"
 
 PROFILE="${HOME}/.profile"
@@ -46,6 +63,9 @@ fi
 
 "$VENV/bin/$CMD" doctor
 "$VENV/bin/$CMD" capabilities
-printf '%s installed successfully.\n' "$PROJECT"
+"$VENV/bin/$CMD" --help >/dev/null
+"$VENV/bin/$CMD" -h >/dev/null
+"$VENV/bin/$CMD" help >/dev/null
+printf '%s installed/repaired successfully.\n' "$PROJECT"
 printf 'Command: %s\n' "$CMD"
-printf 'PATH is configured for new shells via %s.\n' "$PROFILE"
+printf 'PATH is configured for new login shells via %s.\n' "$PROFILE"
