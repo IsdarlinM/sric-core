@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.5.7 - 2026-08-09
+- Added first-party runtime compatibility checks that validate installed package versions and required runtime modules before dependent products use shared SRIC features.
+- Added signed-channel runtime repair support for stale or same-version-corrupt first-party installations; repair never selects arbitrary packages or URLs.
+- Added regression coverage reproducing the `sric.web_workbench` missing-module failure and verifying upgrade, same-version force-reinstall and unsupported-newer-runtime behavior.
+- This release is the shared compatibility floor for product releases that use the Web Feature Workbench.
+
 ## 0.5.6 - 2026-08-09
 - Added the shared Web Feature Workbench at `/workbench`, providing structured responsive forms for every public CLI command and argument while retaining `/console` as an advanced argv-oriented surface.
 - Added a generated CLI/Web feature schema covering positional arguments, options, flags, paired boolean flags, count/repeated options, multiplicity, arity, required/default/type/help metadata and sensitive-field classification.
