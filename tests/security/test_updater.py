@@ -148,6 +148,28 @@ def test_force_never_downgrades(monkeypatch: pytest.MonkeyPatch) -> None:
         )
 
 
+def test_force_rejects_prerelease_over_stable_same_core(monkeypatch: pytest.MonkeyPatch) -> None:
+    manifest = _manifest("0.5.3-rc.1")
+    monkeypatch.setattr(updater, "load_and_verify_manifest", lambda *args, **kwargs: manifest)
+
+    with pytest.raises(ValueError, match="does not permit downgrades"):
+        perform_update(
+            manifest_source="unused",
+            public_key_path=Path("unused"),
+            expected_product="sric-core",
+            current_version="0.5.3",
+            check_only=False,
+            force=True,
+            state_paths=[],
+        )
+
+
+def test_stable_release_is_newer_than_prerelease() -> None:
+    status = check_update(_manifest("0.5.3"), "0.5.3-rc.1")
+    assert status.update_available is True
+    assert status.same_version is False
+
+
 def test_check_and_force_are_mutually_exclusive() -> None:
     with pytest.raises(ValueError, match="mutually exclusive"):
         perform_update(
