@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.5.9 - 2026-08-09
+- Hardened Linux/Termux and Windows installers as idempotent repair paths with `pip`, `setuptools`, `wheel`, `pip check`, shared-Web import probes and root help smokes.
+- Fixed Linux PATH persistence so `.profile` receives `export PATH="$HOME/.local/bin:$PATH"` without literal quote characters entering the PATH value.
+- Fixed Windows Python discovery so the `py` launcher selects any Python 3 interpreter that actually satisfies `>=3.11` instead of requiring an installed 3.11 runtime specifically.
+- Added standalone installer regression coverage for PATH quoting, Python selection, dependency integrity and public help forms.
+
 ## 0.5.8 - 2026-08-09
 - Completed the public CLI help contract so `sric help` is a first-class alias for root help while preserving `sric --help`, `sric -h`, `sric COMMAND --help`, `sric COMMAND -h`, and `sric COMMAND help`.
 - Added an exhaustive E2E interface gate that walks every public command with both help flags and trailing-help normalization and compares every ordered CLI parameter with the Web Feature Workbench schema.
