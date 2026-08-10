@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import re
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
@@ -33,7 +34,13 @@ DEFAULT_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
     ("authorization", re.compile(r"(?im)^(authorization\s*:\s*)(.+)$")),
     ("cookie", re.compile(r"(?im)^(cookie\s*:\s*)(.+)$")),
     ("set-cookie", re.compile(r"(?im)^(set-cookie\s*:\s*)(.+)$")),
-    ("api-key", re.compile(r"(?i)(\b(?:api[_-]?key|x-api-key)\b\s*[:=]\s*)([^\s,;]+)")),
+    ("api-key", re.compile(r"(?i)(\b(?:api[_-]?key|x-api-key)\b\s*[:=]\s*)([^\s,;&]+)")),
+    (
+        "secret-kv",
+        re.compile(
+            r"(?i)(\b(?:access[_-]?token|refresh[_-]?token|id[_-]?token|client[_-]?secret|client[_-]?assertion|password|passwd|pwd|session(?:_id)?|sid|private[_-]?key|secret|token)\b\s*[:=]\s*)([^\s,;&]+)"
+        ),
+    ),
     ("bearer", re.compile(r"(?i)(bearer\s+)[A-Za-z0-9._~+/=-]+")),
 )
 
@@ -106,13 +113,30 @@ def _redact_json_value(value: Any, detected: dict[str, int], counters: dict[str,
             if sensitive and child not in (None, ""):
                 counters[normalized] = counters.get(normalized, 0) + 1
                 detected[normalized] = detected.get(normalized, 0) + 1
-                output[key] = _token(normalized, counters[normalized])
+                output[str(key)] = _token(normalized, counters[normalized])
             else:
-                output[key] = _redact_json_value(child, detected, counters)
+                output[str(key)] = _redact_json_value(child, detected, counters)
         return output
-    if isinstance(value, list):
+    if isinstance(value, (list, tuple, set, frozenset)):
         return [_redact_json_value(v, detected, counters) for v in value]
-    return value
+    if isinstance(value, str):
+        result = redact_text(value)
+        _merge(detected, result.detected)
+        return result.text
+    if isinstance(value, Path):
+        return str(value)
+    if value is None or isinstance(value, (bool, int, float)):
+        return value
+    result = redact_text(repr(value))
+    _merge(detected, result.detected)
+    return result.text
+
+
+def redact_structure(value: Any) -> tuple[Any, dict[str, int]]:
+    """Recursively convert arbitrary metadata to JSON-safe, redacted primitives."""
+
+    detected: dict[str, int] = {}
+    return _redact_json_value(value, detected, {}), detected
 
 
 def redact_body(value: str, content_type: str | None = None) -> RedactionResult:
