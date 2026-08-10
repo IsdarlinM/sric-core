@@ -17,11 +17,11 @@ from .notebook import ResearchNotebook
 from .query import SecurityResearchGraphQuery
 from .web_catalog import install_json_safe_catalog
 
-# Install the hardened builder before Web Console/Workbench bind their command-catalog reference.
+# Install the hardened builder before Web Console/Workspace bind their command-catalog reference.
 install_json_safe_catalog()
 
 from .web_console import WebConsoleConfig, mount_web_console  # noqa: E402
-from .web_workbench import mount_feature_workbench  # noqa: E402
+from .web_security_workspace import mount_security_workspace  # noqa: E402
 from .workspace import Workspace
 
 
@@ -139,7 +139,7 @@ def create_app(workspace: Path | None = None) -> FastAPI:
         version=__version__,
     )
     console_manager = mount_web_console(app, console_config)
-    mount_feature_workbench(app, console_config, console_manager)
+    mount_security_workspace(app, console_config, console_manager)
 
     @app.exception_handler(ValueError)
     async def value_error_handler(request: Any, exc: ValueError) -> JSONResponse:
