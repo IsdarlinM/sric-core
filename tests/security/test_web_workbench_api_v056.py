@@ -25,11 +25,19 @@ def test_workbench_assets_and_csp_are_same_origin_only() -> None:
     client = TestClient(create_app())
     page = client.get("/workbench")
     assert page.status_code == 200
-    assert "full Web/CLI feature parity" in page.text
+    assert "guided security operations" in page.text
+    assert "No command syntax is required" in page.text
+    assert "Advanced argv" not in page.text
+    assert "Additional arguments" not in page.text
+    assert "id=\"extra-args\"" not in page.text
+    assert "href=\"/console\"" not in page.text
     assert "script-src 'self'" in page.headers["content-security-policy"]
     assert "connect-src 'self'" in page.headers["content-security-policy"]
     assert client.get("/workbench/styles.css").status_code == 200
-    assert client.get("/workbench/app.js").status_code == 200
+    script = client.get("/workbench/app.js")
+    assert script.status_code == 200
+    assert "tokenize(extra" not in script.text
+    assert "user supplied argv" not in script.text.lower()
 
 
 def test_workbench_catalog_matches_every_cli_command_and_argument() -> None:
@@ -38,11 +46,13 @@ def test_workbench_catalog_matches_every_cli_command_and_argument() -> None:
     cli = {item["path"]: item for item in build_command_catalog("sric.cli_all")}
     web = {item["path"]: item for item in payload["features"]}
 
+    assert payload["schema_version"] == 2
     assert payload["contract"]["complete"] is True
     assert payload["execution"] == {
         "backend": "web-console-fixed-runner",
         "shell": False,
         "arbitrary_executable": False,
+        "user_supplied_argv": False,
         "mutations_require_approval": True,
     }
     assert set(web) == set(cli)

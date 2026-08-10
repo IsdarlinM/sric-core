@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import html
 import importlib
 import json
 import math
@@ -36,6 +37,23 @@ def _safe_nargs(param: Any) -> int:
         return 1
 
 
+def _safe_choices(param_type: Any) -> list[Any]:
+    raw = getattr(param_type, "choices", None)
+    if raw is None:
+        return []
+    try:
+        return [_json_value(item) for item in raw]
+    except TypeError:
+        return []
+
+
+def _numeric_bound(param_type: Any, name: str) -> Any:
+    value = getattr(param_type, name, None)
+    if value is None:
+        return None
+    return _json_value(value)
+
+
 def _option_metadata(param: Any) -> dict[str, Any]:
     param_type = getattr(param, "type", None)
     type_name = getattr(param_type, "name", None)
@@ -49,6 +67,19 @@ def _option_metadata(param: Any) -> dict[str, Any]:
         "nargs": _safe_nargs(param),
         "default": _json_value(getattr(param, "default", None)),
         "type": str(type_name),
+        "choices": _safe_choices(param_type),
+        "min": _numeric_bound(param_type, "min"),
+        "max": _numeric_bound(param_type, "max"),
+        "clamp": bool(getattr(param_type, "clamp", False)),
+        "path": {
+            "exists": bool(getattr(param_type, "exists", False)),
+            "file_okay": bool(getattr(param_type, "file_okay", False)),
+            "dir_okay": bool(getattr(param_type, "dir_okay", False)),
+            "writable": bool(getattr(param_type, "writable", False)),
+            "readable": bool(getattr(param_type, "readable", True)),
+        }
+        if type_name.lower() == "path" or type(param_type).__name__.lower() == "path"
+        else None,
     }
     if hasattr(param, "opts"):
         payload.update(
@@ -119,17 +150,48 @@ def build_json_safe_command_catalog(cli_module: str) -> list[dict[str, Any]]:
             active.remove(identity)
 
     walk(root, ())
-    # Fail here, close to the source, rather than as an opaque FastAPI response serialization 500.
     json.dumps(commands, ensure_ascii=False, allow_nan=False)
     return commands
 
 
+def _guided_console_alias(config: Any, csrf_token: str) -> str:
+    """Keep the historical route as a safe alias without exposing command/argv input."""
+    display_name = html.escape(str(config.display_name))
+    token = html.escape(csrf_token, quote=True)
+    return f"""<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="sentinel-console-token" content="{token}">
+<meta http-equiv="refresh" content="0;url=/workbench">
+<title>{display_name} Security Console</title>
+<link rel="stylesheet" href="/console/styles.css">
+</head>
+<body>
+<main class="guided-alias">
+<h1>{display_name} Security Console</h1>
+<p>The command-oriented console has been retired. Opening the guided operations interface.</p>
+<a href="/workbench">Open Security Console</a>
+</main>
+<script src="/console/app.js" defer></script>
+</body>
+</html>"""
+
+
 def install_json_safe_catalog() -> None:
-    """Install JSON-safe catalog generation and shared Web Console runtime guards."""
+    """Install JSON-safe metadata, guided-console aliasing, and runtime hardening."""
     from . import web_console
     from .web_runtime import install_web_console_runtime_hardening
 
     web_console.build_command_catalog = build_json_safe_command_catalog
+    web_console._console_html = _guided_console_alias
+    web_console.CONSOLE_CSS = (
+        "body{margin:0;min-height:100vh;display:grid;place-items:center;"
+        "background:#090d0b;color:#e8f0eb;font-family:system-ui,sans-serif}"
+        ".guided-alias{max-width:42rem;padding:2rem}a{color:#9fe1b0}"
+    )
+    web_console.CONSOLE_JS = 'window.location.replace("/workbench");'
     install_web_console_runtime_hardening()
     workbench = sys.modules.get("sric.web_workbench")
     if workbench is not None:

@@ -1,51 +1,62 @@
-# Web Feature Workbench
+# Guided Web Security Console
 
-SRIC Core 0.5.6 introduces a shared structured Web surface for every public CLI feature in Sentinel Forge.
+SRIC Core 0.5.13 turns the shared Web Feature Workbench into the primary guided security console for Sentinel Forge products.
 
-## Contract
+## UX contract
 
-The canonical feature source is the installed Typer command tree. `build_feature_catalog()` derives a Web feature for every public CLI command and preserves the original parameter order. The Web schema includes positional arguments, options, flags, paired boolean flags, count/repeated options, multiplicity, arity, required state, default values, type metadata, help text and sensitive-field classification.
+The Web UI is an operation-oriented interface, not a terminal or CLI command composer. Users select a capability and configure it through typed HTML controls. They never need to type command paths, option names, flags, or a free-form argv string.
 
-`feature_contract()` compares the CLI tree with the Web tree. A complete contract requires:
+The installed Typer tree remains the canonical capability source so Web and CLI behavior cannot silently diverge. `build_feature_catalog()` derives one Web operation for every public CLI command and preserves parameter order and semantics. The schema carries positional/optional status, multiplicity, arity, defaults, type metadata, help, sensitivity, numeric bounds, path metadata, and closed choice sets.
 
-- identical public command paths;
-- identical ordered parameter names for each command;
-- no Web-only invented command;
-- no CLI-only command omitted from Web.
+Controls are selected from that metadata:
 
-`/api/v1/workbench/coverage` exposes that result for automated tests and diagnostics.
+- boolean capabilities use checkboxes or explicit Default / Enabled / Disabled selects;
+- closed choice sets use select or multi-select controls;
+- numeric values use number controls and available bounds;
+- repeated values use list/multi-value controls;
+- local paths use path-oriented value fields;
+- sensitive values use password-style controls;
+- optional settings require an explicit `Customize this setting` checkbox before they are serialized.
+
+`feature_contract()` still compares the CLI tree with the Web tree. A complete contract requires identical public operation paths and ordered parameters, with no invented Web-only capability and no CLI-only capability omitted from the UI.
 
 ## Routes
 
-- `/workbench` — structured responsive Web UI for all public features;
-- `/api/v1/workbench/catalog` — feature schema and parity contract;
-- `/api/v1/workbench/coverage` — machine-readable parity status;
-- `/console` — advanced argv-oriented console retained for expert use.
+- `/workbench` — primary guided, responsive Security Console;
+- `/api/v1/workbench/catalog` — typed operation schema and parity contract;
+- `/api/v1/workbench/coverage` — machine-readable coverage status;
+- `/api/v1/console/jobs` and related job routes — internal execution transport used by the guided UI.
 
-The Workbench is not a separate implementation of product behavior. It serializes structured fields to an argv array and submits them through the same fixed Web Command Console runner. This avoids duplicating feature logic and ensures CLI-side Scope, Policy, rate, approval and evidence controls remain authoritative.
+The browser does not expose a free-form arguments field. Internally, structured values are deterministically translated to an argv array and passed to the fixed product runner. This preserves one implementation of product behavior and keeps Scope Engine, Policy Engine, rate limits, approval gates, redaction, audit, and evidence controls authoritative.
 
-## Security
+## Human control
 
-The Workbench:
+Mutating operations expose an explicit approval checkbox. Destructive operations require a second destructive-impact acknowledgement. The browser derives the backend approval token only after those controls are selected; users are never asked to memorize or type a CLI approval phrase.
+
+This preserves the project rule: **AI proposes. Evidence proves. Humans control.**
+
+## Security properties
+
+The Security Console:
 
 - does not expose an operating-system shell;
 - cannot select an executable;
+- exposes no free-form argv/command input;
 - uses the fixed `sric.web_console_runner` path with `shell=False`;
 - disables stdin;
-- reuses the per-process Web console CSRF token for mutating requests;
-- preserves explicit approval for mutating operations and typed approval for destructive operations;
-- marks secret-like inputs as sensitive fields and relies on the shared argument/output redaction path before retention;
-- consumes same-origin assets and APIs under the existing restrictive CSP;
-- streams job state/output through the existing bounded SSE job mechanism.
-
-External/imported content remains untrusted data and is never treated as Web instructions.
+- reuses the per-process Web CSRF token for mutating requests;
+- preserves explicit human approval for mutating/destructive operations;
+- treats secret-like inputs as sensitive and keeps shared redaction before retention;
+- consumes same-origin assets/APIs under the restrictive CSP;
+- streams bounded job state and output through the existing SSE mechanism;
+- treats imported/external content as untrusted data, never browser instructions.
 
 ## Responsive behavior
 
-Desktop presents a three-panel layout: feature catalog, structured runner and recent jobs. Smaller screens collapse this into explicit Features / Runner / Jobs views so all controls remain reachable without horizontal desktop layouts.
+Desktop presents Operations, Configure, and Recent Activity panels. Small screens switch between those sections using large touch-friendly buttons. Every public operation remains reachable without horizontal desktop layouts or memorized syntax.
 
 ## Testing requirement
 
-A release must fail if a new public CLI command or parameter is not represented in the Workbench schema. The exhaustive contract tests also invoke help for every public command and check that documented CLI options/required arguments remain reachable.
+A release must fail if a public CLI command or parameter is missing from the structured Web catalog. Tests also fail if the primary Workbench reintroduces `Advanced argv`, `Additional arguments`, or another free-form command-syntax field.
 
-Destructive actions are not executed merely to satisfy test coverage. Their parser, Web representation, classification and approval/policy gates are tested deterministically; actual destructive execution requires explicit human authorization in a suitable test environment.
+Destructive actions are not executed merely to satisfy test coverage. Their representation, classification, approval/policy gates, and deterministic serialization are tested without performing destructive work.

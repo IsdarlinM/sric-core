@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.5.13 - 2026-08-10
+- Replaced the CLI-like Web Workbench interaction model with a guided Security Console built from operation cards and typed HTML controls.
+- Removed free-form `Advanced argv` / `Additional arguments` entry from the primary Web surface and retired `/console` as an argv-oriented UI while retaining its fixed job transport internally.
+- Added checkbox/tri-state controls for flags, select/multi-select controls for closed choices, numeric/path controls, repeated/fixed-arity controls, and protected sensitive-value fields.
+- Replaced typed destructive approval phrases in the browser with explicit human approval and destructive-impact acknowledgements while preserving the existing backend approval gate.
+- Extended JSON-safe CLI metadata with choices, numeric bounds and path semantics so the Web UI can render appropriate controls without duplicating product behavior.
+- Added regressions for complete CLI/Web parameter coverage, structured control mapping, absence of free-form argv input, same-origin security controls and mutation approval enforcement.
+- Bumped SRIC Core to 0.5.13; hosted GitHub Actions validation remains externally blocked when GitHub refuses to start jobs because of account billing status and is not claimed as PASS.
+
 ## 0.5.12 - 2026-08-10
 - Added a bounded shared operational exception boundary so unexpected CLI/Web/runtime failures are redacted before user-visible output or persistence; explicit `SENTINEL_DEBUG=1` remains the local developer traceback escape hatch.
 - Hardened Web Command Console catalog failures to return structured redacted HTTP 503 responses instead of opaque serialization/runtime 500s.
@@ -84,13 +93,13 @@
 
 ## 0.5.1 - 2026-08-08
 - Added an explicit first-party dependency manifest consumed by both Windows and Linux installers.
-- Installer dependency bootstrap is now separated from third-party PyPI resolution so downstream Sentinel Forge products can resolve author-maintained packages from pinned GitHub source archives.
+- Installer dependency bootstrap is separated from third-party PyPI resolution so downstream Sentinel Forge products can resolve author-maintained packages from pinned GitHub source archives.
 - Kept SRIC itself free of mandatory sibling-product dependencies.
 
 ## 0.5.0 - 2026-08-08
 - Added the shared `SentinelCase` investigation contract for cross-product observations, hypotheses, evidence, counter-evidence and validation recipes.
 - Added deterministic cross-tool claim fingerprints and evidence-adequacy measurement without changing truth state.
-- Added `AutomatedCorrelationStatus`; automated correlation is now structurally limited to `INFERRED` or `HYPOTHESIS` and cannot emit `VALIDATED`.
+- Added `AutomatedCorrelationStatus`; automated correlation is structurally limited to `INFERRED` or `HYPOTHESIS` and cannot emit `VALIDATED`.
 - Added validation-recipe safety guards that reject prohibited/out-of-scope actions and require human approval for mutating validation.
 - Added the Standalone Product Contract and compatibility-aware capability discovery without importing sibling product code.
 - Added `sric capabilities`, the read-only capability API and a shared standalone gate that verifies dependency isolation, CLI safety and product readiness.
