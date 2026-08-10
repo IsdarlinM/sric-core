@@ -67,14 +67,12 @@ def _numeric_bound(param_type: Any, name: str) -> Any:
     return _json_value(value)
 
 
-def _option_metadata(param: Any) -> dict[str, Any]:
-    """Serialize a Click/Typer parameter without guessing its structural kind."""
+def _base_parameter_metadata(param: Any) -> dict[str, Any]:
     param_type = getattr(param, "type", None)
     type_name = getattr(param_type, "name", None)
     if not isinstance(type_name, str) or not type_name:
         type_name = type(param_type).__name__ if param_type is not None else "text"
-
-    payload: dict[str, Any] = {
+    return {
         "name": str(getattr(param, "name", "") or ""),
         "required": bool(getattr(param, "required", False)),
         "multiple": bool(getattr(param, "multiple", False)),
@@ -92,10 +90,15 @@ def _option_metadata(param: Any) -> dict[str, Any]:
             "writable": bool(getattr(param_type, "writable", False)),
             "readable": bool(getattr(param_type, "readable", True)),
         }
-        if type_name.lower() == "path" or type(param_type).__name__.lower() == "path"
+        if str(type_name).lower() == "path" or type(param_type).__name__.lower() == "path"
         else None,
     }
-    if isinstance(param, click.Option):
+
+
+def _option_metadata(param: Any) -> dict[str, Any]:
+    """Serialize Click/Typer parameters without letting one unknown subtype break the catalog."""
+    payload = _base_parameter_metadata(param)
+    if isinstance(param, click.Option) or hasattr(param, "opts"):
         payload.update(
             {
                 "kind": "option",
@@ -108,14 +111,25 @@ def _option_metadata(param: Any) -> dict[str, Any]:
                 "count": bool(getattr(param, "count", False)),
             }
         )
-    elif isinstance(param, click.Argument):
+        return payload
+    if isinstance(param, click.Argument) or isinstance(param, click.Parameter):
         payload.update(
             {"kind": "argument", "opts": [], "secondary_opts": [], "help": ""}
         )
-    else:
-        raise TypeError(
-            "unsupported CLI parameter type in Web catalog: " + type(param).__name__
-        )
+        return payload
+
+    # Third-party Typer/Click-compatible extensions can expose parameter-like objects that
+    # are neither Click Option nor Argument subclasses. Treat them conservatively as
+    # positional metadata instead of turning the complete Web interface into HTTP 500.
+    payload.update(
+        {
+            "kind": "argument",
+            "opts": [],
+            "secondary_opts": [],
+            "help": "",
+            "parameter_class": type(param).__name__,
+        }
+    )
     return payload
 
 
@@ -228,8 +242,9 @@ def install_json_safe_catalog() -> None:
     web_console._console_html = _guided_console_alias
     web_console.CONSOLE_CSS = (
         "body{margin:0;min-height:100vh;display:grid;place-items:center;"
-        "background:#090d0b;color:#e8f0eb;font-family:system-ui,sans-serif}"
-        ".guided-alias{max-width:42rem;padding:2rem}a{color:#9fe1b0}"
+        "background:#0b0f14;color:#e7edf3;font-family:\"Segoe UI Variable Text\","
+        "\"Segoe UI Variable\",Aptos,system-ui,sans-serif}"
+        ".guided-alias{max-width:42rem;padding:2rem}a{color:#70bdca}"
     )
     web_console.CONSOLE_JS = 'window.location.replace("/workbench");'
     install_web_console_runtime_hardening()
