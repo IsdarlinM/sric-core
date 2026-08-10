@@ -28,6 +28,8 @@ jobs:
         run: python -m pytest -q tests/e2e/test_cli_all_commands_functional_v0514.py
       - name: Shared Security Workspace contract
         run: python -m pytest -q tests/e2e/test_security_workspace_v0514.py tests/e2e/test_all_public_cli_web_surfaces_v058.py
+      - name: Web parameter and exception containment contract
+        run: python -m pytest -q tests/security/test_web_catalog_resilience_v0515.py tests/security/test_web_surface_guardrails_v0516.py tests/security/test_web_workbench_api_v056.py
       - run: python -m sric.standalone_gate --root .
       - run: python scripts/release-gate.py --quick
 
@@ -49,6 +51,9 @@ jobs:
           TEST_HOME="${RUNNER_TEMP}/sric-home"
           mkdir -p "$TEST_HOME"
           HOME="$TEST_HOME" sh scripts/install-linux.sh
+          "$TEST_HOME/.local/share/sric/venv/bin/sric" version
+          "$TEST_HOME/.local/share/sric/venv/bin/sric" doctor
+          "$TEST_HOME/.local/share/sric/venv/bin/sric" capabilities
           "$TEST_HOME/.local/share/sric/venv/bin/sric" workspace create preserve
           HOME="$TEST_HOME" sh scripts/uninstall-linux.sh
           test -f "$TEST_HOME/.sric/workspaces/preserve/workspace.json"
@@ -86,6 +91,8 @@ jobs:
         run: python -m pytest -q tests/e2e/test_cli_all_commands_functional_v0514.py
       - name: Shared Security Workspace contract
         run: python -m pytest -q tests/e2e/test_security_workspace_v0514.py tests/e2e/test_all_public_cli_web_surfaces_v058.py
+      - name: Web parameter and exception containment contract
+        run: python -m pytest -q tests/security/test_web_catalog_resilience_v0515.py tests/security/test_web_surface_guardrails_v0516.py tests/security/test_web_workbench_api_v056.py
       - run: python -m sric.standalone_gate --root .
       - run: python scripts/release-gate.py
       - uses: actions/upload-artifact@v4

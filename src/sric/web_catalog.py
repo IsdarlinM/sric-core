@@ -14,11 +14,14 @@ from typer.main import get_command
 
 
 CONSERVATIVE_MUTATING_COMMAND_NAMES = {
+    "collect",
     "collect-url",
     "demo",
     "evidence",
+    "extract",
     "jobs",
     "notebook",
+    "report",
     "validate",
     "workspace",
 }
@@ -95,10 +98,39 @@ def _base_parameter_metadata(param: Any) -> dict[str, Any]:
     }
 
 
+def _parameter_kind(param: Any) -> str:
+    """Identify modern Typer parameters without relying on Click subclass identity.
+
+    Typer 0.26's TyperArgument/TyperOption derive from an abstraction rather than
+    click.Argument/click.Option. Both expose ``opts``; treating every object with opts as
+    an option therefore corrupts positional argument semantics. ``param_type_name`` is
+    the primary contract, followed by conservative structural fallbacks.
+    """
+    hint = str(getattr(param, "param_type_name", "") or "").lower()
+    if hint in {"argument", "option"}:
+        return hint
+    if isinstance(param, click.Argument):
+        return "argument"
+    if isinstance(param, click.Option):
+        return "option"
+    class_name = type(param).__name__.lower()
+    if class_name.endswith("argument"):
+        return "argument"
+    if class_name.endswith("option"):
+        return "option"
+    opts = [str(item) for item in (getattr(param, "opts", ()) or ())]
+    if any(item.startswith("-") for item in opts):
+        return "option"
+    return "argument"
+
+
 def _option_metadata(param: Any) -> dict[str, Any]:
     """Serialize Click/Typer parameters without letting one unknown subtype break the catalog."""
     payload = _base_parameter_metadata(param)
-    if isinstance(param, click.Option) or hasattr(param, "opts"):
+    help_text = str(getattr(param, "help", "") or "")
+    kind = _parameter_kind(param)
+    payload["parameter_class"] = type(param).__name__
+    if kind == "option":
         payload.update(
             {
                 "kind": "option",
@@ -106,29 +138,14 @@ def _option_metadata(param: Any) -> dict[str, Any]:
                 "secondary_opts": [
                     str(item) for item in (getattr(param, "secondary_opts", ()) or ())
                 ],
-                "help": str(getattr(param, "help", "") or ""),
+                "help": help_text,
                 "is_flag": bool(getattr(param, "is_flag", False)),
                 "count": bool(getattr(param, "count", False)),
             }
         )
         return payload
-    if isinstance(param, click.Argument) or isinstance(param, click.Parameter):
-        payload.update(
-            {"kind": "argument", "opts": [], "secondary_opts": [], "help": ""}
-        )
-        return payload
-
-    # Third-party Typer/Click-compatible extensions can expose parameter-like objects that
-    # are neither Click Option nor Argument subclasses. Treat them conservatively as
-    # positional metadata instead of turning the complete Web interface into HTTP 500.
     payload.update(
-        {
-            "kind": "argument",
-            "opts": [],
-            "secondary_opts": [],
-            "help": "",
-            "parameter_class": type(param).__name__,
-        }
+        {"kind": "argument", "opts": [], "secondary_opts": [], "help": help_text}
     )
     return payload
 
@@ -236,6 +253,7 @@ def _guided_console_alias(config: Any, csrf_token: str) -> str:
 def install_json_safe_catalog() -> None:
     """Install JSON-safe metadata, guided-console aliasing, and runtime hardening."""
     from . import web_console
+    from .web_guardrails import install_web_surface_guardrails
     from .web_runtime import install_web_console_runtime_hardening
 
     web_console.build_command_catalog = build_json_safe_command_catalog
@@ -251,3 +269,4 @@ def install_json_safe_catalog() -> None:
     workbench = sys.modules.get("sric.web_workbench")
     if workbench is not None:
         setattr(workbench, "build_command_catalog", build_json_safe_command_catalog)
+    install_web_surface_guardrails()
