@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.5.15 - 2026-08-10
+- Added shared offline-safe Sentinel Forge Web theme tokens for dashboards, API references and product-native Web surfaces, matching the Security Workspace graphite/slate + teal visual contract and professional Segoe UI Variable/Aptos/Cascadia Code font stacks.
+- Hardened CLI-to-Web catalog parameter serialization so third-party Click/Typer-compatible parameter subtypes cannot turn the complete Web interface into an HTTP 500 merely because their concrete class is unfamiliar.
+- Kept command classification, mutation approval, fixed `shell=False` execution, CSRF, redaction and evidence truth-state controls unchanged.
+- Added regressions for shared visual tokens and fail-safe catalog parameter metadata.
+
+## 0.5.14 - 2026-08-10
+- Reorganized the shared Web surface into Sentinel Forge Security Workspace v3 with a persistent product rail, Operations Library, dedicated Operation Workspace, separate execution evidence/output, and full-width Recent Activity.
+- Replaced the former green console palette with an offline professional graphite/slate + teal visual system using Segoe UI Variable/Aptos/system typography and Cascadia Code/SFMono/Consolas for evidence output.
+- Preserved generated CLI/Web parity, fixed-runner `shell=False`, no user-supplied argv, Scope/Policy/Rate/Approval controls, CSRF and secret redaction.
+- Added an exhaustive functional smoke for every public SRIC command and Security Workspace E2E contracts. Hosted zero-step jobs remain distinct from PASS evidence.
+
 ## 0.5.13 - 2026-08-10
 - Replaced the CLI-like Web Workbench interaction model with a guided Security Console built from operation cards and typed HTML controls.
 - Removed free-form `Advanced argv` / `Additional arguments` entry from the primary Web surface and retired `/console` as an argv-oriented UI while retaining its fixed job transport internally.
