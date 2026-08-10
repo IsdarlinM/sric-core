@@ -317,7 +317,10 @@ def install_web_console_runtime_hardening() -> None:
             reader_thread.join(timeout=2)
 
             with self._lock:
-                job.returncode = returncode
+                if returncode is not None:
+                    job.returncode = returncode
+                elif not unreaped:
+                    job.returncode = None
                 if not unreaped:
                     job.process = None
                 job.finished_at = time.time()
