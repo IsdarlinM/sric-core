@@ -2,8 +2,8 @@
   "schema_version": 1,
   "product": "sric-core",
   "repository": "IsdarlinM/sric-core",
-  "version": "0.5.11",
-  "commit": "a1fa38b976cd7ba8dc1ece842ebfbe008b452481",
-  "rollback_version": "0.5.10",
-  "rollback_commit": "9979d0dfb511d349361a55dc8dab7a204803d422"
+  "version": "0.5.13",
+  "commit": "bd90fe668e4a2a23c00a39f7d63df1c092b63c12",
+  "rollback_version": "0.5.12",
+  "rollback_commit": "4dd0ad417e55fc76fb67d582ec50234bffff2876"
 }
