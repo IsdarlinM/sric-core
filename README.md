@@ -1,7 +1,7 @@
 # Security Research Intelligence Core (SRIC)
 
 ```text
-SRIC Core :: v0.5.12
+SRIC Core :: v0.5.13
 Developer: IsdarlinM
 
 Evidence-native shared core for security research intelligence.
@@ -57,13 +57,12 @@ An installed but incompatible product is reported as present but does not publis
 - shared Standalone Product Contract gate and ecosystem standalone conformance gate;
 - shared professional CLI presentation with subdued green banners, Rich help and `--no-color`/`NO_COLOR` support;
 - complete help aliases: `sric --help`, `sric -h`, `sric help`, `sric COMMAND --help`, `sric COMMAND -h`, and `sric COMMAND help`;
-- shared Web Command Console with fixed-runner execution and no operating-system shell;
-- JSON-safe CLI catalog generation for the Web Console/Workbench, including path/enum/container defaults and defensive command metadata normalization;
-- structured redacted HTTP 503 handling for command-catalog construction failures;
-- bounded Web Console terminate/kill/reap behavior for timed-out child processes;
-- bounded retired-job retention so SSE/status readers cannot race terminal-job pruning;
-- redacted Job Engine errors/events/metadata/provenance before persistence;
-- shared **Web Feature Workbench** that derives every public feature and every CLI argument/option from the installed Typer tree and renders structured responsive forms, approval controls, live jobs and output.
+- guided **Web Security Console** derived from the real public Typer capability tree, with operation cards, typed controls, approval UX, live jobs and output;
+- JSON-safe capability metadata including choices, numeric bounds, path semantics, defaults and defensive normalization;
+- fixed-runner Web execution with `shell=False`, disabled stdin and no browser-selected executable;
+- structured redacted HTTP 503 handling for capability-catalog failures;
+- bounded Web child-process terminate/kill/reap behavior and retained terminal-job tombstones for SSE/status readers;
+- redacted Job Engine errors/events/metadata/provenance before persistence.
 
 ## Installation
 
@@ -83,7 +82,7 @@ sric doctor
 sric capabilities
 ```
 
-The 0.5.12 installers remain idempotent and repair-capable. They validate both the selected host Python and an existing virtual-environment interpreter; an obsolete/broken runtime causes only the isolated `venv` to be rebuilt, never workspaces or configuration. They bootstrap `pip`, `setuptools` and `wheel`, run `pip check`, import-probe the shared Web runtime and smoke-test all root help forms before reporting success.
+The 0.5.13 installers remain idempotent and repair-capable. They validate both the selected host Python and an existing virtual-environment interpreter; an obsolete/broken runtime causes only the isolated `venv` to be rebuilt, never workspaces or configuration. They bootstrap `pip`, `setuptools` and `wheel`, run `pip check`, import-probe the shared Web runtime and smoke-test all root help forms before reporting success.
 
 Installer-internal CLI smokes run with `SENTINEL_BANNER=never` and write their output to a temporary validation log. A successful installation therefore does not print the product banner repeatedly; if a validation fails, the captured diagnostic output is printed before the installer exits non-zero.
 
@@ -101,25 +100,33 @@ sric capabilities
 
 ## CLI presentation
 
-Interactive terminals display a compact subdued-green banner ordered as `SRIC Core :: v0.5.12`, `Developer: IsdarlinM`, then a brief purpose statement. Use `sric --no-color COMMAND`, `sric COMMAND --no-color`, or the standard `NO_COLOR` environment variable for plain terminal output. Presentation is kept off machine-readable stdout; see `docs/cli-presentation.md`.
+Interactive terminals display a compact subdued-green banner ordered as `SRIC Core :: v0.5.13`, `Developer: IsdarlinM`, then a brief purpose statement. Use `sric --no-color COMMAND`, `sric COMMAND --no-color`, or the standard `NO_COLOR` environment variable for plain terminal output. Presentation is kept off machine-readable stdout; see `docs/cli-presentation.md`.
 
 Unexpected operational exceptions are contained and redacted by default. Developers can opt into raw local exception propagation with `SENTINEL_DEBUG=1`; this switch is not intended for normal user operation.
 
-## Full Web/CLI feature parity
+## Guided Web Security Console
 
-`sric web` opens the full Web Feature Workbench at `/workbench`. `/console` remains available as an advanced argv-oriented console.
+`sric web` opens `/workbench`, the primary guided Security Console. The browser does **not** expose a command box, a free-form argv field, option-name entry, or an operating-system shell. The historical `/console` route is retained only as a compatibility alias that opens the guided interface.
 
-The Workbench is generated from the same installed Typer command tree as the CLI. Each public command receives a structured Web feature definition and every CLI parameter is represented in the same order, including positional arguments, options, flags, paired boolean flags, repeated/count options, variadic values, required state, defaults, help text and sensitive-field handling. `/api/v1/workbench/coverage` reports a parity failure if a CLI command or parameter disappears from Web representation.
+The Security Console is generated from the same installed Typer capability tree as the CLI so product behavior remains single-sourced. Every public command still has a Web operation and every ordered CLI parameter remains represented, but users interact through UI semantics rather than command syntax:
 
-Catalog metadata is normalized to JSON primitives before it reaches FastAPI. Non-primitive defaults such as `Path`, enum values and container members are represented deterministically; malformed `nargs` metadata falls back safely, and a cyclic command tree is rejected explicitly. If catalog construction itself fails unexpectedly, the API returns a bounded redacted HTTP 503 response instead of leaking a raw exception or surfacing an opaque serialization 500.
+- flags become checkboxes or explicit Default / Enabled / Disabled selectors;
+- closed choices become combo boxes or multi-select controls;
+- numeric values use number controls with available bounds;
+- fixed-arity and repeated values use structured list/value controls;
+- paths use path-oriented fields;
+- secret-like values use protected password-style controls;
+- optional settings require an explicit `Customize this setting` choice before being included.
 
-The browser does not receive an operating-system shell. Structured Web forms are serialized to argv and submitted to the fixed Python runner used by `/console`, with `shell=False`, disabled stdin, secret redaction, bounded execution, SSE output, cancellation and mutation/destructive approval gates. Product Scope/Policy/Rate/Approval controls remain authoritative.
+`/api/v1/workbench/coverage` reports a contract failure if a CLI capability or parameter disappears from Web representation. Catalog metadata is normalized to JSON primitives before it reaches FastAPI, including `Path`, enum/container values, choices and numeric bounds. Malformed metadata is bounded and cyclic command trees are rejected explicitly.
+
+Internally, selected controls are deterministically serialized to argv only as a transport detail and submitted to the fixed Python runner. `shell=False`, disabled stdin, redaction, bounded execution, SSE output, cancellation and Scope/Policy/Rate/Approval controls remain authoritative. The browser cannot choose an executable or supply arbitrary command syntax.
+
+Mutating operations expose an explicit human-approval checkbox. Destructive operations add a second impact acknowledgement; the backend destructive-approval contract remains enforced without asking the user to memorize/type a CLI phrase.
 
 Timed-out child commands use bounded terminate/kill/wait handling. If a child still cannot be synchronously reaped after forced termination, the Web runtime records a controlled terminal state and engages a bounded background reaper rather than blocking the request worker indefinitely. Recently pruned terminal jobs remain available briefly to already-active status/SSE readers to avoid prune/read races.
 
-The interface is responsive: desktop uses feature catalog + runner + jobs panels; mobile exposes those views through compact navigation.
-
-See `docs/web/feature-workbench.md`, `docs/web/cli-parity.md`, and `docs/runtime-compatibility.md`.
+Desktop presents Operations, Configure and Recent Activity panels. Mobile switches between those sections with touch-friendly controls. See `docs/web/feature-workbench.md`, `docs/web/cli-parity.md`, and `docs/runtime-compatibility.md`.
 
 ## Updates
 
@@ -148,11 +155,9 @@ python sric-core/scripts/release-standalone-ecosystem.py --root .
 python sric-core/scripts/release-ecosystem.py --root .
 ```
 
-The 0.5.12 regressions add coverage for structured catalog failure handling, bounded process reaping, prune/SSE retention, persisted Job Engine secret redaction and shared operational exception containment. The existing exhaustive interface gate continues to walk every public CLI command, all supported help forms and exact CLI/Web parameter parity.
+The 0.5.13 regressions add coverage for guided-control mapping, exact CLI/Web parameter coverage, absence of free-form argv entry, same-origin Web assets, mutation approval and existing fixed-runner safety invariants.
 
-A focused local harness for the newly changed runtime paths completed `4 passed` after first exposing and then verifying the fix for a background-reaper return-code race. That focused result is not the complete release gate. Hosted GitHub Actions for the current candidate cannot allocate runners while the account is locked due to a billing issue, so exact-commit full release PASS must not be claimed until those jobs actually execute.
-
-Machine-readable release evidence is written below `build/release-evidence/`. A release requires PASS tied to the exact source commit/tree.
+Hosted GitHub Actions for this candidate are currently unable to allocate runners because GitHub reports the account as locked due to a billing issue. Those jobs contain zero executed steps, so they are an external validation blocker and are not claimed as PASS or as code-test failures. Machine-readable release evidence requires PASS tied to the exact source commit/tree before the release can be considered fully validated.
 
 ## Safety defaults
 
