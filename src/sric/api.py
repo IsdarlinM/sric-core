@@ -10,6 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, RedirectResponse, StreamingResponse
 
 from . import __version__
+from .errors import safe_exception_message
 from .graph import TemporalGraph
 from .jobs import JobEngine
 from .notebook import ResearchNotebook
@@ -142,6 +143,9 @@ def create_app(workspace: Path | None = None) -> FastAPI:
 
     @app.exception_handler(ValueError)
     async def value_error_handler(request: Any, exc: ValueError) -> JSONResponse:
-        return JSONResponse(status_code=400, content={"error": str(exc)})
+        return JSONResponse(
+            status_code=400,
+            content={"error": safe_exception_message(exc)},
+        )
 
     return app

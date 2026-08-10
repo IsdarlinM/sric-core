@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from .redaction import redact_text, redact_url
+from .redaction import redact_structure, redact_text, redact_url
 
 
 class AuditLogger:
@@ -25,15 +25,16 @@ class AuditLogger:
         metadata: dict[str, Any] | None = None,
     ) -> None:
         safe_target = redact_text(redact_url(target).text).text
+        safe_metadata, _ = redact_structure(metadata or {})
         event = {
             "timestamp": datetime.now(timezone.utc).isoformat(),
-            "user": user,
-            "action": action,
+            "user": redact_text(user).text,
+            "action": redact_text(action).text,
             "target": safe_target,
-            "policy_decision": policy_decision,
-            "result": result,
+            "policy_decision": redact_text(policy_decision).text,
+            "result": redact_text(result).text,
             "tool_version": tool_version,
-            "metadata": metadata or {},
+            "metadata": safe_metadata,
         }
         with self.path.open("a", encoding="utf-8") as fh:
             fh.write(json.dumps(event, sort_keys=True) + "\n")
