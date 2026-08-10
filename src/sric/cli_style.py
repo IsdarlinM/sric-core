@@ -10,6 +10,8 @@ from typing import Any
 
 import typer
 
+from .errors import debug_exceptions_enabled, safe_exception_message
+
 
 @dataclass(frozen=True, slots=True)
 class CLIBrand:
@@ -148,7 +150,7 @@ def run_branded_cli(
     *,
     argv_normalizer: Callable[[list[str]], list[str]] | None = None,
 ) -> None:
-    """Run a Sentinel Forge CLI with global color normalization and branded banner."""
+    """Run a Sentinel Forge CLI with normalized presentation and safe exception containment."""
 
     prepared = normalize_no_color_argv(sys.argv)
     if argv_normalizer is not None:
@@ -156,5 +158,17 @@ def run_branded_cli(
     sys.argv[:] = prepared
     no_color = "--no-color" in prepared[1:] or "NO_COLOR" in os.environ
     with color_environment(no_color=no_color):
-        render_banner(brand, no_color=no_color)
-        app()
+        try:
+            render_banner(brand, no_color=no_color)
+            app()
+        except KeyboardInterrupt:
+            typer.echo("Cancelled.", err=True)
+            raise SystemExit(130) from None
+        except Exception as exc:
+            if debug_exceptions_enabled():
+                raise
+            typer.echo(
+                f"Error: {type(exc).__name__}: {safe_exception_message(exc)}",
+                err=True,
+            )
+            raise SystemExit(1) from None
