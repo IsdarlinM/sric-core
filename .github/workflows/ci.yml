@@ -48,7 +48,7 @@ jobs:
           "$TEST_HOME/.local/share/sric/venv/bin/sric" workspace create preserve
           HOME="$TEST_HOME" sh scripts/uninstall-linux.sh
           test -f "$TEST_HOME/.sric/workspaces/preserve/workspace.json"
-      - name: Windows clean installer smoke
+      - name: Windows install/uninstall preservation smoke
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
@@ -56,9 +56,15 @@ jobs:
           $env:LOCALAPPDATA = Join-Path $env:USERPROFILE 'AppData\Local'
           New-Item -ItemType Directory -Force -Path $env:LOCALAPPDATA | Out-Null
           cmd /c scripts\install-windows.cmd
-          & "$env:LOCALAPPDATA\SRIC\venv\Scripts\sric.exe" version
-          & "$env:LOCALAPPDATA\SRIC\venv\Scripts\sric.exe" doctor
-          & "$env:LOCALAPPDATA\SRIC\venv\Scripts\sric.exe" capabilities
+          $runtime = "$env:LOCALAPPDATA\SRIC\venv\Scripts\sric.exe"
+          & $runtime version
+          & $runtime doctor
+          & $runtime capabilities
+          New-Item -ItemType Directory -Force -Path "$env:LOCALAPPDATA\SRIC\user-data" | Out-Null
+          Set-Content -Path "$env:LOCALAPPDATA\SRIC\user-data\preserve.marker" -Value 'preserve'
+          cmd /c scripts\uninstall-windows.cmd
+          if (Test-Path "$env:LOCALAPPDATA\SRIC\venv") { throw 'runtime venv was not removed' }
+          if (-not (Test-Path "$env:LOCALAPPDATA\SRIC\user-data\preserve.marker")) { throw 'user data was removed' }
 
   full-release-gate:
     runs-on: ubuntu-latest

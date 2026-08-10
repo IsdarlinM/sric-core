@@ -9,7 +9,20 @@ from enum import Enum
 from pathlib import Path
 from typing import Any
 
+import click
 from typer.main import get_command
+
+
+CONSERVATIVE_MUTATING_COMMAND_NAMES = {
+    "collect-url",
+    "demo",
+    "evidence",
+    "jobs",
+    "notebook",
+    "validate",
+    "workspace",
+}
+READ_ONLY_WORKSPACE_ACTIONS = {"list", "show", "status"}
 
 
 def _json_value(value: Any) -> Any:
@@ -55,6 +68,7 @@ def _numeric_bound(param_type: Any, name: str) -> Any:
 
 
 def _option_metadata(param: Any) -> dict[str, Any]:
+    """Serialize a Click/Typer parameter without guessing its structural kind."""
     param_type = getattr(param, "type", None)
     type_name = getattr(param_type, "name", None)
     if not isinstance(type_name, str) or not type_name:
@@ -81,7 +95,7 @@ def _option_metadata(param: Any) -> dict[str, Any]:
         if type_name.lower() == "path" or type(param_type).__name__.lower() == "path"
         else None,
     }
-    if hasattr(param, "opts"):
+    if isinstance(param, click.Option):
         payload.update(
             {
                 "kind": "option",
@@ -94,11 +108,33 @@ def _option_metadata(param: Any) -> dict[str, Any]:
                 "count": bool(getattr(param, "count", False)),
             }
         )
-    else:
+    elif isinstance(param, click.Argument):
         payload.update(
             {"kind": "argument", "opts": [], "secondary_opts": [], "help": ""}
         )
+    else:
+        raise TypeError(
+            "unsupported CLI parameter type in Web catalog: " + type(param).__name__
+        )
     return payload
+
+
+def _classify_catalog_command(path: tuple[str, ...]) -> tuple[str, bool, bool]:
+    """Apply the shared classifier plus conservative fail-closed Web overrides."""
+    from .web_console import _classify_command
+
+    classification, approval_required, context_only = _classify_command(path)
+    normalized = tuple(part.lower().replace("_", "-") for part in path)
+    names = set(normalized)
+
+    if "workspace" in names:
+        if len(normalized) > 1 and normalized[-1] in READ_ONLY_WORKSPACE_ACTIONS:
+            return classification, approval_required, context_only
+        return "MUTATING_REVERSIBLE", True, context_only
+
+    if names & CONSERVATIVE_MUTATING_COMMAND_NAMES:
+        return "MUTATING_REVERSIBLE", True, context_only
+    return classification, approval_required, context_only
 
 
 def build_json_safe_command_catalog(cli_module: str) -> list[dict[str, Any]]:
@@ -109,16 +145,15 @@ def build_json_safe_command_catalog(cli_module: str) -> list[dict[str, Any]]:
         raise RuntimeError(f"{cli_module} does not expose a Typer app")
     root = get_command(app)
 
-    # Import classification only after web_console is loaded to keep this helper acyclic.
-    from .web_console import _classify_command
-
     commands: list[dict[str, Any]] = []
     active: set[int] = set()
 
     def walk(command: Any, prefix: tuple[str, ...]) -> None:
         identity = id(command)
         if identity in active:
-            raise RuntimeError(f"cyclic CLI command tree detected at {' '.join(prefix) or '<root>'}")
+            raise RuntimeError(
+                f"cyclic CLI command tree detected at {' '.join(prefix) or '<root>'}"
+            )
         active.add(identity)
         try:
             children = getattr(command, "commands", None)
@@ -129,8 +164,12 @@ def build_json_safe_command_catalog(cli_module: str) -> list[dict[str, Any]]:
                     continue
                 name = str(raw_name)
                 path = prefix + (name,)
-                classification, approval_required, context_only = _classify_command(path)
-                raw_help = getattr(child, "help", None) or getattr(child, "short_help", None) or ""
+                classification, approval_required, context_only = _classify_catalog_command(path)
+                raw_help = (
+                    getattr(child, "help", None)
+                    or getattr(child, "short_help", None)
+                    or ""
+                )
                 raw_params = getattr(child, "params", ()) or ()
                 commands.append(
                     {
@@ -138,7 +177,8 @@ def build_json_safe_command_catalog(cli_module: str) -> list[dict[str, Any]]:
                         "help": str(raw_help),
                         "classification": str(classification),
                         "approval_required": bool(approval_required),
-                        "approval_phrase_required": classification == "MUTATING_DESTRUCTIVE",
+                        "approval_phrase_required": classification
+                        == "MUTATING_DESTRUCTIVE",
                         "context_only": bool(context_only),
                         "executable": not bool(context_only),
                         "is_group": isinstance(getattr(child, "commands", None), dict),

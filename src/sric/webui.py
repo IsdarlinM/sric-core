@@ -18,7 +18,15 @@ class AnalysisPage:
 
 
 def _page_html(config: AnalysisPage, *, prefix: str) -> str:
-    example = json.dumps(config.example_payload, indent=2, ensure_ascii=False).replace("<", "\\u003c")
+    example = json.dumps(
+        config.example_payload,
+        indent=2,
+        ensure_ascii=False,
+    ).replace("<", "\\u003c")
+    bootstrap = json.dumps(
+        {"endpoint": config.endpoint, "example": config.example_payload},
+        ensure_ascii=False,
+    ).replace("<", "\\u003c")
     return f"""<!doctype html>
 <html lang="en">
 <head>
@@ -54,7 +62,7 @@ def _page_html(config: AnalysisPage, *, prefix: str) -> str:
       </section>
     </div>
   </main>
-  <script>window.SENTINEL_ANALYSIS={json.dumps({"endpoint": config.endpoint, "example": config.example_payload}).replace("<", "\\u003c")};</script>
+  <script>window.SENTINEL_ANALYSIS={bootstrap};</script>
   <script src="{prefix}/app.js"></script>
 </body>
 </html>"""
