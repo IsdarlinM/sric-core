@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import html
 import importlib
 import json
 import math
@@ -153,12 +154,44 @@ def build_json_safe_command_catalog(cli_module: str) -> list[dict[str, Any]]:
     return commands
 
 
+def _guided_console_alias(config: Any, csrf_token: str) -> str:
+    """Keep the historical route as a safe alias without exposing command/argv input."""
+    display_name = html.escape(str(config.display_name))
+    token = html.escape(csrf_token, quote=True)
+    return f"""<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="sentinel-console-token" content="{token}">
+<meta http-equiv="refresh" content="0;url=/workbench">
+<title>{display_name} Security Console</title>
+<link rel="stylesheet" href="/console/styles.css">
+</head>
+<body>
+<main class="guided-alias">
+<h1>{display_name} Security Console</h1>
+<p>The command-oriented console has been retired. Opening the guided operations interface.</p>
+<a href="/workbench">Open Security Console</a>
+</main>
+<script src="/console/app.js" defer></script>
+</body>
+</html>"""
+
+
 def install_json_safe_catalog() -> None:
-    """Install JSON-safe catalog generation and shared Web Console runtime guards."""
+    """Install JSON-safe metadata, guided-console aliasing, and runtime hardening."""
     from . import web_console
     from .web_runtime import install_web_console_runtime_hardening
 
     web_console.build_command_catalog = build_json_safe_command_catalog
+    web_console._console_html = _guided_console_alias
+    web_console.CONSOLE_CSS = (
+        "body{margin:0;min-height:100vh;display:grid;place-items:center;"
+        "background:#090d0b;color:#e8f0eb;font-family:system-ui,sans-serif}"
+        ".guided-alias{max-width:42rem;padding:2rem}a{color:#9fe1b0}"
+    )
+    web_console.CONSOLE_JS = 'window.location.replace("/workbench");'
     install_web_console_runtime_hardening()
     workbench = sys.modules.get("sric.web_workbench")
     if workbench is not None:
