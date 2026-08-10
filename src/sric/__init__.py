@@ -103,4 +103,4 @@ __all__ = [
     "supersede_record",
     "verify_merkle_proof",
 ]
-__version__ = "0.5.10"
+__version__ = "0.5.11"
