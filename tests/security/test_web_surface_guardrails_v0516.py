@@ -7,6 +7,7 @@ import typer
 from fastapi import HTTPException
 from typer.main import get_command
 
+from sric import web_workbench
 from sric.web_catalog import (
     _classify_catalog_command,
     _option_metadata,
@@ -14,7 +15,6 @@ from sric.web_catalog import (
 )
 from sric.web_console import ConsoleRunRequest, WebConsoleConfig, WebConsoleManager
 from sric.web_guardrails import SUPPORTED_WEB_CONTROLS, WORKBENCH_RECOVERY_JS
-from sric.web_workbench import build_feature_catalog
 
 
 def test_real_typer_argument_is_json_safe_and_keeps_argument_semantics() -> None:
@@ -25,7 +25,8 @@ def test_real_typer_argument_is_json_safe_and_keeps_argument_semantics() -> None
         pass
 
     root = get_command(app)
-    param = root.commands["sample"].params[0]
+    command = root.commands["sample"] if hasattr(root, "commands") else root
+    param = command.params[0]
     payload = _option_metadata(param)
 
     assert type(param).__name__ == "TyperArgument"
@@ -46,7 +47,7 @@ def test_known_writer_commands_fail_closed_as_mutating_reversible() -> None:
 
 def test_every_sric_cli_parameter_has_a_supported_render_control() -> None:
     install_json_safe_catalog()
-    features = build_feature_catalog("sric.cli_all")
+    features = web_workbench.build_feature_catalog("sric.cli_all")
     assert features
     for feature in features:
         assert feature["id"]
@@ -59,7 +60,26 @@ def test_every_sric_cli_parameter_has_a_supported_render_control() -> None:
                 assert param["primary_opt"]
 
 
-def test_unexpected_submission_exception_becomes_redacted_503(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_unexpected_feature_catalog_exception_becomes_redacted_503(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    install_json_safe_catalog()
+
+    def fail_catalog(_module: str) -> list[dict[str, object]]:
+        raise RuntimeError("password=do-not-display")
+
+    monkeypatch.setattr(web_workbench, "build_command_catalog", fail_catalog)
+    with pytest.raises(HTTPException) as exc_info:
+        web_workbench.build_feature_catalog("sric.cli_all")
+    assert exc_info.value.status_code == 503
+    detail = str(exc_info.value.detail)
+    assert "Security Workspace catalog unavailable" in detail
+    assert "do-not-display" not in detail
+
+
+def test_unexpected_submission_exception_becomes_redacted_503(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     install_json_safe_catalog()
     manager = WebConsoleManager(
         WebConsoleConfig(
@@ -106,8 +126,11 @@ def test_event_stream_runtime_exception_is_terminal_and_does_not_escape(
 
 
 def test_recovery_javascript_exposes_real_reload_and_promise_error_handling() -> None:
-    assert "Reload interface" in WORKBENCH_RECOVERY_JS
-    assert "window.location.reload()" in WORKBENCH_RECOVERY_JS
-    assert 'addEventListener("unhandledrejection"' in WORKBENCH_RECOVERY_JS
-    assert 'addEventListener("error"' in WORKBENCH_RECOVERY_JS
-    assert "Capability catalog did not become available" in WORKBENCH_RECOVERY_JS
+    install_json_safe_catalog()
+    script = web_workbench.WORKBENCH_JS
+    assert "Reload interface" in script
+    assert "window.location.reload()" in script
+    assert 'addEventListener("unhandledrejection"' in script
+    assert 'addEventListener("error"' in script
+    assert "Capability catalog did not become available" in script
+    assert WORKBENCH_RECOVERY_JS in script
