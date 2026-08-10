@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.5.11 - 2026-08-09
+- Hardened Web Command Console/Workbench CLI catalog metadata so every command, option, default and type is reduced to deterministic JSON-safe primitives before FastAPI serialization, preventing opaque catalog HTTP 500 responses.
+- Added cycle detection and explicit catalog JSON validation while preserving exact CLI command/parameter parity and the fixed `shell=False` execution model.
+- Made Linux/Termux and Windows installer-internal doctor/capability/help smokes quiet with `SENTINEL_BANNER=never`; validation output is retained in a temporary log and emitted only on failure.
+- Kept normal installation idempotent: no forced reinstall is used unless an explicit repair/update path requests it.
+- Added real API catalog serialization and quiet-installer regression coverage.
+
 ## 0.5.10 - 2026-08-09
 - Centralized safe Windows user-PATH updates in `sric.install_path` using `winreg`, preserving the registry value type and broadcasting `WM_SETTINGCHANGE`; installers no longer use `setx PATH`.
 - Linux/Termux now validates the interpreter inside an existing virtual environment and rebuilds only the isolated runtime venv when it is stale, incomplete or broken; workspaces, configuration and evidence remain untouched.
