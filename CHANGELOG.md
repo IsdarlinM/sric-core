@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.5.16 - 2026-08-10
+- Closed the concrete `TyperArgument` Web-catalog failure reproduced by FossilScope 0.5.14 and retained fail-safe serialization for Click/Typer-compatible parameter extensions, including argument help metadata.
+- Added shared Security Workspace guardrails that validate every rendered feature/control mapping, convert unexpected catalog/coverage/submission/history/status/cancellation failures to bounded redacted HTTP 503 responses, and terminate unexpected SSE runtime failures as controlled failed events instead of escaping the ASGI generator.
+- Added a real `Reload interface` recovery control plus visible catalog-health state and global browser promise/script failure handling so a transient catalog/runtime error cannot leave the Web surface silently empty or apparently missing controls.
+- Reclassified `collect`, `extract`, and `report` as `MUTATING_REVERSIBLE` for Web execution because they can write workspace/output state; human approval remains mandatory and the fixed `shell=False` runner is unchanged.
+- Added focused regressions using a real Typer `TyperArgument`, all supported Web controls, redacted 503 containment, controlled SSE failure, recovery UI behavior, and conservative mutation classification.
+- CI continues to execute the complete SRIC functional command smoke, Security Workspace contracts, and the new Web parameter/exception gate on Linux and Windows Python 3.11-3.13 whenever runners are actually allocated.
+
 ## 0.5.15 - 2026-08-10
 - Added shared offline-safe Sentinel Forge Web theme tokens for dashboards, API references and product-native Web surfaces, matching the Security Workspace graphite/slate + teal visual contract and professional Segoe UI Variable/Aptos/Cascadia Code font stacks.
 - Hardened CLI-to-Web catalog parameter serialization so third-party Click/Typer-compatible parameter subtypes cannot turn the complete Web interface into an HTTP 500 merely because their concrete class is unfamiliar.
