@@ -50,16 +50,25 @@ if exist "%FIRST_PARTY%" (
 )
 "%VENV%\Scripts\python.exe" -m pip install --upgrade -c "%CONSTRAINTS%" "%REPO_ROOT%" || (echo Failed to install SRIC Core runtime.& exit /b 3)
 "%VENV%\Scripts\python.exe" -m pip check || (echo Installed dependency graph is inconsistent.& exit /b 3)
-"%VENV%\Scripts\python.exe" -c "import sric; import sric.web_console; import sric.web_workbench" || (echo SRIC Core import integrity check failed.& exit /b 3)
+"%VENV%\Scripts\python.exe" -c "import sric; import sric.web_console; import sric.web_workbench; import sric.web_catalog" || (echo SRIC Core import integrity check failed.& exit /b 3)
 
 >"%BIN_DIR%\%CMD%.cmd" echo @"%VENV%\Scripts\%CMD%.exe" %%*
 "%VENV%\Scripts\python.exe" -m sric.install_path "%BIN_DIR%" || exit /b 3
 
-"%VENV%\Scripts\%CMD%.exe" doctor || exit /b 1
-"%VENV%\Scripts\%CMD%.exe" capabilities || exit /b 1
-"%VENV%\Scripts\%CMD%.exe" --help >nul || exit /b 1
-"%VENV%\Scripts\%CMD%.exe" -h >nul || exit /b 1
-"%VENV%\Scripts\%CMD%.exe" help >nul || exit /b 1
+set "SENTINEL_BANNER=never"
+set "CHECK_LOG=%INSTALL_ROOT%\install-check.log"
+>"%CHECK_LOG%" type nul
+"%VENV%\Scripts\%CMD%.exe" doctor >>"%CHECK_LOG%" 2>&1 || goto :validation_failed
+"%VENV%\Scripts\%CMD%.exe" capabilities >>"%CHECK_LOG%" 2>&1 || goto :validation_failed
+"%VENV%\Scripts\%CMD%.exe" --help >>"%CHECK_LOG%" 2>&1 || goto :validation_failed
+"%VENV%\Scripts\%CMD%.exe" -h >>"%CHECK_LOG%" 2>&1 || goto :validation_failed
+"%VENV%\Scripts\%CMD%.exe" help >>"%CHECK_LOG%" 2>&1 || goto :validation_failed
+del /q "%CHECK_LOG%" >nul 2>&1
 echo %PROJECT% installed/repaired successfully.
 echo Open a new Command Prompt and run: %CMD% --help
 exit /b 0
+
+:validation_failed
+echo Installation validation failed.
+type "%CHECK_LOG%"
+exit /b 4
