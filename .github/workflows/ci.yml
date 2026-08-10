@@ -24,6 +24,10 @@ jobs:
           cache: pip
       - run: python -m pip install --upgrade pip
       - run: python -m pip install -e ".[dev]"
+      - name: Every public SRIC CLI command functional smoke
+        run: python -m pytest -q tests/e2e/test_cli_all_commands_functional_v0514.py
+      - name: Shared Security Workspace contract
+        run: python -m pytest -q tests/e2e/test_security_workspace_v0514.py tests/e2e/test_all_public_cli_web_surfaces_v058.py
       - run: python -m sric.standalone_gate --root .
       - run: python scripts/release-gate.py --quick
 
@@ -78,6 +82,10 @@ jobs:
           cache: pip
       - run: python -m pip install --upgrade pip
       - run: python -m pip install -e ".[dev]"
+      - name: Every public SRIC CLI command functional smoke
+        run: python -m pytest -q tests/e2e/test_cli_all_commands_functional_v0514.py
+      - name: Shared Security Workspace contract
+        run: python -m pytest -q tests/e2e/test_security_workspace_v0514.py tests/e2e/test_all_public_cli_web_surfaces_v058.py
       - run: python -m sric.standalone_gate --root .
       - run: python scripts/release-gate.py
       - uses: actions/upload-artifact@v4
