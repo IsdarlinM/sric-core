@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.5.12 - 2026-08-10
+- Added a bounded shared operational exception boundary so unexpected CLI/Web/runtime failures are redacted before user-visible output or persistence; explicit `SENTINEL_DEBUG=1` remains the local developer traceback escape hatch.
+- Hardened Web Command Console catalog failures to return structured redacted HTTP 503 responses instead of opaque serialization/runtime 500s.
+- Bounded timed-out child-process termination through terminate/kill/wait and added a background reaper when the final synchronous wait cannot complete.
+- Added a five-minute retired-job tombstone window so terminal-job pruning cannot race active SSE/status consumers into spurious not-found failures.
+- Redacted Job Engine errors, event messages, metadata and provenance before persistence, and expanded audit/structured secret redaction for common key/value forms.
+- Added security regressions for catalog failure handling, process reaping, prune/SSE behavior, persisted job redaction and shared exception containment.
+- Prepared the shared runtime contract for downstream Sentinel Forge products without weakening Scope, Policy, rate, approval, fixed-runner or evidence truth-state controls.
+
 ## 0.5.11 - 2026-08-09
 - Hardened Web Command Console/Workbench CLI catalog metadata so every command, option, default and type is reduced to deterministic JSON-safe primitives before FastAPI serialization, preventing opaque catalog HTTP 500 responses.
 - Added cycle detection and explicit catalog JSON validation while preserving exact CLI command/parameter parity and the fixed `shell=False` execution model.
