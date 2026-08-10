@@ -5,7 +5,9 @@ import sys
 from pathlib import Path
 
 import pytest
+from fastapi.testclient import TestClient
 
+from sric.api import create_app
 from sric.audit import AuditLogger
 from sric.cli_style import CLIBrand, run_branded_cli
 from sric.errors import safe_exception_message
@@ -58,6 +60,22 @@ def test_audit_logger_redacts_result_and_nested_metadata(tmp_path: Path) -> None
     assert "metadata-secret" not in raw
     assert "deep-secret" not in raw
     assert "REDACTED" in raw
+
+
+def test_api_value_errors_are_redacted() -> None:
+    app = create_app()
+
+    @app.get("/_test/secret-error")
+    async def secret_error() -> None:
+        raise ValueError("token=api-secret password=another-secret")
+
+    client = TestClient(app, raise_server_exceptions=False)
+    response = client.get("/_test/secret-error")
+    assert response.status_code == 400
+    body = response.text
+    assert "api-secret" not in body
+    assert "another-secret" not in body
+    assert "REDACTED" in body
 
 
 def test_run_branded_cli_contains_unexpected_exception_without_traceback(
