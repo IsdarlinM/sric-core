@@ -2,13 +2,11 @@ from __future__ import annotations
 
 import sys
 from functools import wraps
-from typing import Any, Callable, TypeVar, cast
+from typing import Any, NoReturn
 
 from fastapi import HTTPException
 
 from .errors import debug_exceptions_enabled, safe_exception_message
-
-F = TypeVar("F", bound=Callable[..., Any])
 
 SUPPORTED_WEB_CONTROLS = {
     "text",
@@ -99,7 +97,7 @@ WORKBENCH_RECOVERY_JS = r"""
 """.strip()
 
 
-def _raise_http_unavailable(label: str, exc: BaseException) -> None:
+def _raise_http_unavailable(label: str, exc: BaseException) -> NoReturn:
     if debug_exceptions_enabled():
         raise exc
     raise HTTPException(
@@ -127,7 +125,6 @@ def _validate_feature_catalog(features: list[dict[str, Any]]) -> None:
             if not str(param.get("id") or "") or not str(param.get("name") or ""):
                 raise ValueError("Web parameter metadata is missing id or name")
             if param.get("kind") == "option" and not param.get("primary_opt"):
-                # Paired/flag/count options still need a concrete option token for the fixed runner.
                 raise ValueError(f"Web option cannot be mapped to CLI argv: {param.get('name')}")
 
 
@@ -198,9 +195,11 @@ def _install_manager_guardrails() -> None:
         def guarded(self: Any, *args: Any, **kwargs: Any) -> Any:
             try:
                 return original(self, *args, **kwargs)
-            except (HTTPException, *expected):
+            except HTTPException:
                 raise
             except Exception as exc:
+                if expected and isinstance(exc, expected):
+                    raise
                 _raise_http_unavailable(label, exc)
 
         setattr(manager_type, name, guarded)
@@ -237,10 +236,9 @@ def _install_manager_guardrails() -> None:
 def install_web_surface_guardrails() -> None:
     """Install idempotent Web/API error containment and recovery affordances.
 
-    This runs after the fixed-runner and catalog hardening are installed. Expected user
-    validation errors keep their normal 4xx contracts; only unexpected runtime failures
-    are converted to bounded/redacted 503 responses. SSE failures end as a controlled
-    terminal event rather than escaping the ASGI generator.
+    Expected user validation errors keep their normal 4xx contracts; only unexpected
+    runtime failures become bounded/redacted 503 responses. SSE failures end as a
+    controlled terminal event rather than escaping the ASGI generator.
     """
 
     _install_feature_builder_guardrails()
