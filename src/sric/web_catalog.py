@@ -125,10 +125,12 @@ def build_json_safe_command_catalog(cli_module: str) -> list[dict[str, Any]]:
 
 
 def install_json_safe_catalog() -> None:
-    """Install the hardened catalog builder for console and already-imported Workbench code."""
+    """Install JSON-safe catalog generation and shared Web Console runtime guards."""
     from . import web_console
+    from .web_runtime import install_web_console_runtime_hardening
 
     web_console.build_command_catalog = build_json_safe_command_catalog
+    install_web_console_runtime_hardening()
     workbench = sys.modules.get("sric.web_workbench")
     if workbench is not None:
         setattr(workbench, "build_command_catalog", build_json_safe_command_catalog)
