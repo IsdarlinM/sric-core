@@ -1,7 +1,7 @@
 # Security Research Intelligence Core (SRIC)
 
 ```text
-SRIC Core :: v0.5.10
+SRIC Core :: v0.5.11
 Developer: IsdarlinM
 
 Evidence-native shared core for security research intelligence.
@@ -58,6 +58,7 @@ An installed but incompatible product is reported as present but does not publis
 - shared professional CLI presentation with subdued green banners, Rich help and `--no-color`/`NO_COLOR` support;
 - complete help aliases: `sric --help`, `sric -h`, `sric help`, `sric COMMAND --help`, `sric COMMAND -h`, and `sric COMMAND help`;
 - shared Web Command Console with fixed-runner execution and no operating-system shell;
+- JSON-safe CLI catalog generation for the Web Console/Workbench, including path/enum/container defaults and defensive command metadata normalization;
 - shared **Web Feature Workbench** that derives every public feature and every CLI argument/option from the installed Typer tree and renders structured responsive forms, approval controls, live jobs and output.
 
 ## Installation
@@ -78,7 +79,9 @@ sric doctor
 sric capabilities
 ```
 
-The 0.5.10 installers are idempotent and repair-capable. They validate both the selected host Python and an existing virtual-environment interpreter; an obsolete/broken runtime causes only the isolated `venv` to be rebuilt, never workspaces or configuration. They bootstrap `pip`, `setuptools` and `wheel`, run `pip check`, import-probe the shared Web runtime and smoke-test all root help forms before reporting success.
+The 0.5.11 installers are idempotent and repair-capable. They validate both the selected host Python and an existing virtual-environment interpreter; an obsolete/broken runtime causes only the isolated `venv` to be rebuilt, never workspaces or configuration. They bootstrap `pip`, `setuptools` and `wheel`, run `pip check`, import-probe the shared Web runtime and smoke-test all root help forms before reporting success.
+
+Installer-internal CLI smokes run with `SENTINEL_BANNER=never` and write their output to a temporary validation log. A successful installation therefore does not print the product banner repeatedly; if a validation fails, the captured diagnostic output is printed before the installer exits non-zero.
 
 On Termux, a writable `$PREFIX/bin` already present in `PATH` is preferred so the command becomes immediately reachable. Standard Linux falls back to `~/.local/bin` and persists the canonical `export PATH="$HOME/.local/bin:$PATH"` line when required. Windows accepts any Python 3 interpreter that satisfies `>=3.11`; user PATH changes are centralized in `sric.install_path`, which updates `HKCU\Environment\Path` without `setx` truncation and broadcasts `WM_SETTINGCHANGE`.
 
@@ -94,13 +97,15 @@ sric capabilities
 
 ## CLI presentation
 
-Interactive terminals display a compact subdued-green banner ordered as `SRIC Core :: v0.5.10`, `Developer: IsdarlinM`, then a brief purpose statement. Use `sric --no-color COMMAND`, `sric COMMAND --no-color`, or the standard `NO_COLOR` environment variable for plain terminal output. Presentation is kept off machine-readable stdout; see `docs/cli-presentation.md`.
+Interactive terminals display a compact subdued-green banner ordered as `SRIC Core :: v0.5.11`, `Developer: IsdarlinM`, then a brief purpose statement. Use `sric --no-color COMMAND`, `sric COMMAND --no-color`, or the standard `NO_COLOR` environment variable for plain terminal output. Presentation is kept off machine-readable stdout; see `docs/cli-presentation.md`.
 
 ## Full Web/CLI feature parity
 
 `sric web` opens the full Web Feature Workbench at `/workbench`. `/console` remains available as an advanced argv-oriented console.
 
 The Workbench is generated from the same installed Typer command tree as the CLI. Each public command receives a structured Web feature definition and every CLI parameter is represented in the same order, including positional arguments, options, flags, paired boolean flags, repeated/count options, variadic values, required state, defaults, help text and sensitive-field handling. `/api/v1/workbench/coverage` reports a parity failure if a CLI command or parameter disappears from Web representation.
+
+Catalog metadata is normalized to JSON primitives before it reaches FastAPI. Non-primitive defaults such as `Path`, enum values and container members are represented deterministically; malformed `nargs` metadata falls back safely, and a cyclic command tree is rejected explicitly instead of surfacing as an opaque HTTP 500.
 
 The browser does not receive an operating-system shell. Structured Web forms are serialized to argv and submitted to the fixed Python runner used by `/console`, with `shell=False`, disabled stdin, secret redaction, bounded execution, SSE output, cancellation and mutation/destructive approval gates. Product Scope/Policy/Rate/Approval controls remain authoritative.
 
@@ -135,7 +140,7 @@ python sric-core/scripts/release-standalone-ecosystem.py --root .
 python sric-core/scripts/release-ecosystem.py --root .
 ```
 
-The 0.5.10 installer regressions verify runtime recreation stays scoped to the venv, Termux `$PREFIX/bin` selection, safe Windows registry PATH handling, Windows Python selection, dependency integrity checks, shared Web import probes and help forms. The existing exhaustive interface gate continues to walk every public command and verify CLI/Web parameter parity.
+The 0.5.11 regressions require a real `/api/v1/console/catalog` response to serialize successfully, cover non-JSON CLI defaults, verify quiet installer smokes and prohibit forced reinstall in the normal installer path. The existing exhaustive interface gate continues to walk every public command and verify CLI/Web parameter parity.
 
 Machine-readable evidence is written below `build/release-evidence/`. A release requires PASS tied to the exact source commit/tree.
 

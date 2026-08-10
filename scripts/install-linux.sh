@@ -71,7 +71,7 @@ fi
   echo "Installed dependency graph is inconsistent." >&2
   exit 3
 }
-"$VENV/bin/python" -c 'import sric; import sric.web_console; import sric.web_workbench' || {
+"$VENV/bin/python" -c 'import sric; import sric.web_console; import sric.web_workbench; import sric.web_catalog' || {
   echo "SRIC Core import integrity check failed." >&2
   exit 3
 }
@@ -91,10 +91,22 @@ case ":${PATH:-}:" in
     ;;
 esac
 
-"$VENV/bin/$CMD" doctor
-"$VENV/bin/$CMD" capabilities
-"$VENV/bin/$CMD" --help >/dev/null
-"$VENV/bin/$CMD" -h >/dev/null
-"$VENV/bin/$CMD" help >/dev/null
+CHECK_LOG="$INSTALL_ROOT/install-check.log"
+: > "$CHECK_LOG"
+run_check() {
+  label="$1"
+  shift
+  if ! SENTINEL_BANNER=never "$@" >>"$CHECK_LOG" 2>&1; then
+    printf 'Installation validation failed: %s\n' "$label" >&2
+    cat "$CHECK_LOG" >&2
+    exit 4
+  fi
+}
+run_check doctor "$VENV/bin/$CMD" doctor
+run_check capabilities "$VENV/bin/$CMD" capabilities
+run_check help "$VENV/bin/$CMD" --help
+run_check short-help "$VENV/bin/$CMD" -h
+run_check help-alias "$VENV/bin/$CMD" help
+rm -f "$CHECK_LOG"
 printf '%s installed/repaired successfully.\n' "$PROJECT"
 printf 'Command: %s\n' "$CMD"

@@ -14,8 +14,13 @@ from .graph import TemporalGraph
 from .jobs import JobEngine
 from .notebook import ResearchNotebook
 from .query import SecurityResearchGraphQuery
-from .web_console import WebConsoleConfig, mount_web_console
-from .web_workbench import mount_feature_workbench
+from .web_catalog import install_json_safe_catalog
+
+# Install the hardened builder before Web Console/Workbench bind their command-catalog reference.
+install_json_safe_catalog()
+
+from .web_console import WebConsoleConfig, mount_web_console  # noqa: E402
+from .web_workbench import mount_feature_workbench  # noqa: E402
 from .workspace import Workspace
 
 
