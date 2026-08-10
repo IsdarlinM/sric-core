@@ -14,11 +14,14 @@ from typer.main import get_command
 
 
 CONSERVATIVE_MUTATING_COMMAND_NAMES = {
+    "collect",
     "collect-url",
     "demo",
     "evidence",
+    "extract",
     "jobs",
     "notebook",
+    "report",
     "validate",
     "workspace",
 }
@@ -98,6 +101,7 @@ def _base_parameter_metadata(param: Any) -> dict[str, Any]:
 def _option_metadata(param: Any) -> dict[str, Any]:
     """Serialize Click/Typer parameters without letting one unknown subtype break the catalog."""
     payload = _base_parameter_metadata(param)
+    help_text = str(getattr(param, "help", "") or "")
     if isinstance(param, click.Option) or hasattr(param, "opts"):
         payload.update(
             {
@@ -106,7 +110,7 @@ def _option_metadata(param: Any) -> dict[str, Any]:
                 "secondary_opts": [
                     str(item) for item in (getattr(param, "secondary_opts", ()) or ())
                 ],
-                "help": str(getattr(param, "help", "") or ""),
+                "help": help_text,
                 "is_flag": bool(getattr(param, "is_flag", False)),
                 "count": bool(getattr(param, "count", False)),
             }
@@ -114,7 +118,7 @@ def _option_metadata(param: Any) -> dict[str, Any]:
         return payload
     if isinstance(param, click.Argument) or isinstance(param, click.Parameter):
         payload.update(
-            {"kind": "argument", "opts": [], "secondary_opts": [], "help": ""}
+            {"kind": "argument", "opts": [], "secondary_opts": [], "help": help_text}
         )
         return payload
 
@@ -126,7 +130,7 @@ def _option_metadata(param: Any) -> dict[str, Any]:
             "kind": "argument",
             "opts": [],
             "secondary_opts": [],
-            "help": "",
+            "help": help_text,
             "parameter_class": type(param).__name__,
         }
     )
@@ -236,6 +240,7 @@ def _guided_console_alias(config: Any, csrf_token: str) -> str:
 def install_json_safe_catalog() -> None:
     """Install JSON-safe metadata, guided-console aliasing, and runtime hardening."""
     from . import web_console
+    from .web_guardrails import install_web_surface_guardrails
     from .web_runtime import install_web_console_runtime_hardening
 
     web_console.build_command_catalog = build_json_safe_command_catalog
@@ -251,3 +256,4 @@ def install_json_safe_catalog() -> None:
     workbench = sys.modules.get("sric.web_workbench")
     if workbench is not None:
         setattr(workbench, "build_command_catalog", build_json_safe_command_catalog)
+    install_web_surface_guardrails()
