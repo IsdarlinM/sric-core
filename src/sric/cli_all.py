@@ -25,9 +25,19 @@ app.rich_markup_mode = None
 def branded_main(
     ctx: typer.Context,
     no_color: bool = no_color_option(),
+    version: bool = typer.Option(
+        False,
+        "--version",
+        "-V",
+        is_eager=True,
+        help="Show the SRIC Core version and exit.",
+    ),
 ) -> None:
     """SRIC Core CLI with shared Sentinel Forge presentation controls."""
 
+    if version:
+        typer.echo(__version__)
+        raise typer.Exit()
     configure_cli_context(ctx, no_color=no_color)
     _original_main(ctx)
 
