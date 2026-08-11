@@ -4,7 +4,6 @@ import json
 from pathlib import Path
 from types import SimpleNamespace
 
-import click
 from typer.main import get_command
 from typer.testing import CliRunner
 
@@ -58,11 +57,12 @@ EXPECTED_LEAF_COMMANDS = {
 }
 
 
-def _leaf_paths(command: click.Command, prefix: tuple[str, ...] = ()) -> set[str]:
-    if not isinstance(command, click.Group):
+def _leaf_paths(command: object, prefix: tuple[str, ...] = ()) -> set[str]:
+    commands = getattr(command, "commands", None)
+    if not isinstance(commands, dict):
         return {" ".join(prefix)}
     leaves: set[str] = set()
-    for name, child in command.commands.items():
+    for name, child in commands.items():
         leaves.update(_leaf_paths(child, (*prefix, name)))
     return leaves
 

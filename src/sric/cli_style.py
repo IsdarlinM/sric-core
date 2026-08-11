@@ -31,7 +31,7 @@ class CLIBrand:
         return f"Developer: {self.developer}"
 
 
-def build_banner(brand: CLIBrand, *, width: int = 76) -> str:
+def build_banner(brand: CLIBrand, *, width: int = 80) -> str:
     """Build the canonical portable Sentinel Forge ASCII banner without ANSI."""
 
     width = max(64, min(width, 96))

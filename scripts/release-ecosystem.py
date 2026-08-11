@@ -62,16 +62,30 @@ def compatible(version: str, spec: str | None) -> bool:
     if spec is None:
         return False
     current = version_tuple(version)
+
+    def constraint_tuple(value: str) -> tuple[int, int, int]:
+        parts = value.split(".")
+        if 1 <= len(parts) < 3 and all(part.isdigit() for part in parts):
+            value = ".".join([*parts, *(["0"] * (3 - len(parts)))])
+        return version_tuple(value)
+
     for clause in (part for part in spec.split(",") if part):
-        if clause.startswith(">=") and current < version_tuple(clause[2:]):
-            return False
-        if clause.startswith(">") and current <= version_tuple(clause[1:]):
-            return False
-        if clause.startswith("<=") and current > version_tuple(clause[2:]):
-            return False
-        if clause.startswith("<") and current >= version_tuple(clause[1:]):
-            return False
-        if clause.startswith("==") and current != version_tuple(clause[2:]):
+        if clause.startswith(">="):
+            if current < constraint_tuple(clause[2:]):
+                return False
+        elif clause.startswith(">"):
+            if current <= constraint_tuple(clause[1:]):
+                return False
+        elif clause.startswith("<="):
+            if current > constraint_tuple(clause[2:]):
+                return False
+        elif clause.startswith("<"):
+            if current >= constraint_tuple(clause[1:]):
+                return False
+        elif clause.startswith("=="):
+            if current != constraint_tuple(clause[2:]):
+                return False
+        else:
             return False
     return True
 

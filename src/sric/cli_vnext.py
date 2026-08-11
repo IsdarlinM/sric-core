@@ -20,7 +20,7 @@ from .query import GraphQueryError, SecurityResearchGraphQuery
 from .vault import SecretVault
 from .workspace import Workspace
 
-base.create_app = create_vnext_app
+setattr(base, "create_app", create_vnext_app)
 
 app = base.app
 workspace_app = base.workspace_app
@@ -272,7 +272,7 @@ def claim_transition(
 
 def _normalize_trailing_help(argv: list[str]) -> list[str]:
     normalized = list(argv)
-    if len(normalized) >= 3 and normalized[-1] == "help" and normalized[1] != "help":
+    if len(normalized) >= 3 and normalized[-1] == "help":
         normalized[-1] = "--help"
     return normalized
 

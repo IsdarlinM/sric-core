@@ -62,7 +62,7 @@ class ConfidenceSignal(BaseModel):
             if expires <= reference:
                 return 0.0
         age_days = max(0.0, (reference - observed).total_seconds() / 86400.0)
-        return 0.5 ** (age_days / self.temporal_half_life_days)
+        return float(0.5 ** (age_days / self.temporal_half_life_days))
 
     def effective_contribution(self, *, at: datetime | None = None) -> float:
         direct_factor = 1.0 if self.direct_observation else 0.85

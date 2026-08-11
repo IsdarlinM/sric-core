@@ -52,6 +52,19 @@ SAFE_COMMAND_NAMES = {
     "search",
     "lineage",
 }
+CONSERVATIVE_MUTATING_COMMAND_NAMES = {
+    "collect",
+    "collect-url",
+    "demo",
+    "evidence",
+    "extract",
+    "jobs",
+    "notebook",
+    "report",
+    "validate",
+    "workspace",
+}
+READ_ONLY_WORKSPACE_ACTIONS = {"list", "show", "status"}
 DESTRUCTIVE_COMMAND_NAMES = {
     "delete",
     "destroy",
@@ -143,7 +156,7 @@ def _json_default(value: Any) -> Any:
     if value is None or isinstance(value, (bool, int, float, str)):
         return value
     if isinstance(value, Path):
-        return str(value)
+        return value.as_posix()
     if isinstance(value, (tuple, list, set)):
         return [_json_default(item) for item in value]
     return repr(value)
@@ -162,15 +175,20 @@ def _option_metadata(param: Any) -> dict[str, Any]:
             type(getattr(param, "type", None)).__name__,
         ),
     }
-    if hasattr(param, "opts"):
+    hint = str(getattr(param, "param_type_name", "") or "").lower()
+    class_name = type(param).__name__.lower()
+    is_option = hint == "option" or (
+        hint != "argument" and class_name.endswith("option")
+    )
+    if is_option:
         payload.update(
             {
                 "kind": "option",
-                "opts": list(param.opts),
-                "secondary_opts": list(param.secondary_opts),
-                "help": param.help or "",
-                "is_flag": bool(param.is_flag),
-                "count": bool(param.count),
+                "opts": list(getattr(param, "opts", ()) or ()),
+                "secondary_opts": list(getattr(param, "secondary_opts", ()) or ()),
+                "help": getattr(param, "help", "") or "",
+                "is_flag": bool(getattr(param, "is_flag", False)),
+                "count": bool(getattr(param, "count", False)),
             }
         )
     else:
@@ -187,6 +205,13 @@ def _classify_command(path: tuple[str, ...]) -> tuple[str, bool, bool]:
     if normalized & DESTRUCTIVE_COMMAND_NAMES:
         return "MUTATING_DESTRUCTIVE", True, False
     if normalized & MUTATING_COMMAND_NAMES:
+        return "MUTATING_REVERSIBLE", True, False
+    ordered = tuple(part.lower().replace("_", "-") for part in path)
+    if "workspace" in normalized:
+        if len(ordered) > 1 and ordered[-1] in READ_ONLY_WORKSPACE_ACTIONS:
+            return "READ_ONLY_SAFE", False, False
+        return "MUTATING_REVERSIBLE", True, False
+    if normalized & CONSERVATIVE_MUTATING_COMMAND_NAMES:
         return "MUTATING_REVERSIBLE", True, False
     if normalized and normalized <= SAFE_COMMAND_NAMES:
         return "READ_ONLY_SAFE", False, False

@@ -82,7 +82,7 @@ def _security_workspace_html(config: WebConsoleConfig, csrf_token: str) -> str:
         <span class="guardrail-kicker">Execution guardrail</span>
         <strong>Scope, policy and human approval stay authoritative.</strong>
       </div>
-      <p>No free-form shell or command syntax is accepted. Every operation is mapped from the installed CLI contract.</p>
+      <p>No command syntax is required or accepted. Every operation is mapped from the installed CLI contract.</p>
     </section>
 
     <div class="mobile-tabs" aria-label="Console sections">

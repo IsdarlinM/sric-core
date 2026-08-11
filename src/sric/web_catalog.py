@@ -37,7 +37,7 @@ def _json_value(value: Any) -> Any:
     if isinstance(value, Enum):
         return _json_value(value.value)
     if isinstance(value, Path):
-        return str(value)
+        return value.as_posix()
     if isinstance(value, dict):
         return {str(key): _json_value(item) for key, item in value.items()}
     if isinstance(value, (tuple, list, set, frozenset)):
@@ -220,7 +220,33 @@ def build_json_safe_command_catalog(cli_module: str) -> list[dict[str, Any]]:
         finally:
             active.remove(identity)
 
-    walk(root, ())
+    root_children = getattr(root, "commands", None)
+    if isinstance(root_children, dict):
+        walk(root, ())
+    else:
+        # Typer collapses an application containing a single command into a
+        # TyperCommand. Preserve that public command in the Web catalog instead
+        # of returning an empty interface.
+        name = str(getattr(root, "name", "") or "").strip()
+        if name:
+            classification, approval_required, context_only = _classify_catalog_command((name,))
+            raw_help = getattr(root, "help", None) or getattr(root, "short_help", None) or ""
+            commands.append(
+                {
+                    "path": name,
+                    "help": str(raw_help),
+                    "classification": str(classification),
+                    "approval_required": bool(approval_required),
+                    "approval_phrase_required": classification == "MUTATING_DESTRUCTIVE",
+                    "context_only": bool(context_only),
+                    "executable": not bool(context_only),
+                    "is_group": False,
+                    "params": [
+                        _option_metadata(param)
+                        for param in (getattr(root, "params", ()) or ())
+                    ],
+                }
+            )
     json.dumps(commands, ensure_ascii=False, allow_nan=False)
     return commands
 

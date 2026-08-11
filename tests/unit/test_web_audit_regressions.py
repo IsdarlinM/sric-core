@@ -18,7 +18,8 @@ def _sample_params() -> dict[str, object]:
         pass
 
     root = get_command(app)
-    command = root.commands["sample"]
+    commands = getattr(root, "commands", None)
+    command = commands["sample"] if isinstance(commands, dict) else root
     return {str(param.name): param for param in command.params}
 
 

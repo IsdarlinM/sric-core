@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import builtins
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -65,6 +66,6 @@ class ResearchNotebook:
         data["saved_queries"] = queries
         self._save(data)
 
-    def saved_queries(self) -> list[dict[str, str]]:
+    def saved_queries(self) -> builtins.list[dict[str, str]]:
         raw = self._load()["saved_queries"]
         return [{"name": str(x["name"]), "query": str(x["query"])} for x in raw]

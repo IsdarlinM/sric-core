@@ -87,9 +87,12 @@ class IsolatedPluginRunner:
             def limits() -> None:
                 try:
                     import resource
-                    resource.setrlimit(resource.RLIMIT_CPU, (self.cpu_seconds, self.cpu_seconds + 1))
+                    setrlimit = getattr(resource, "setrlimit")
+                    rlimit_cpu = getattr(resource, "RLIMIT_CPU")
+                    rlimit_as = getattr(resource, "RLIMIT_AS")
+                    setrlimit(rlimit_cpu, (self.cpu_seconds, self.cpu_seconds + 1))
                     mem = self.memory_mb * 1024 * 1024
-                    resource.setrlimit(resource.RLIMIT_AS, (mem, mem))
+                    setrlimit(rlimit_as, (mem, mem))
                 except Exception:
                     pass
             preexec = limits

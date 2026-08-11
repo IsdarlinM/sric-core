@@ -161,7 +161,9 @@ class TemporalGraph:
         self.get_node(source_node_id); self.get_node(target_node_id); edges=[GraphEdge.model_validate(x) for x in self._load()["edges"]]
         adjacency: dict[str,list[GraphEdge]]={}
         for edge in edges: adjacency.setdefault(edge.source_node_id,[]).append(edge)
-        q=deque([(source_node_id,[],[source_node_id])]); seen={source_node_id}
+        q: deque[tuple[str, list[str], list[str]]] = deque(
+            [(source_node_id, [], [source_node_id])]
+        ); seen={source_node_id}
         while q:
             current,path_edges,path_nodes=q.popleft()
             if len(path_edges)>=max_depth: continue

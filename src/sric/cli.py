@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import socket
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 import typer
 
@@ -143,7 +143,7 @@ def ai_test() -> None:
     """Verify that disabled mode fails closed rather than making an external call."""
     try:
         AIService().complete(AIRequest(capability="test", sanitized_payload="test"))
-    except RuntimeError as exc:
+    except (PermissionError, RuntimeError) as exc:
         typer.echo(str(exc))
         return
     raise typer.Exit(1)
@@ -218,6 +218,7 @@ def query_workspace(
 ) -> None:
     """Search the temporal graph or execute the read-only graph query DSL."""
     graph = TemporalGraph(workspace)
+    payload: dict[str, Any] | list[dict[str, Any]]
     if dsl:
         try:
             payload = SecurityResearchGraphQuery(graph).execute(query)
@@ -384,6 +385,6 @@ def run() -> None:
     """Console entrypoint with support for `sric COMMAND help`."""
     import sys
 
-    if len(sys.argv) >= 3 and sys.argv[-1] == "help" and sys.argv[1] != "help":
+    if len(sys.argv) >= 3 and sys.argv[-1] == "help":
         sys.argv[-1] = "--help"
     app()

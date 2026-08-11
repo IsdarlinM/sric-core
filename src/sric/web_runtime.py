@@ -355,10 +355,10 @@ def install_web_console_runtime_hardening() -> None:
             return job
         return original_cancel(self, job_id)
 
-    manager_type.catalog = catalog
-    manager_type._prune = prune
-    manager_type.snapshot = snapshot
-    manager_type.output_since = output_since
-    manager_type._run = run
-    manager_type.cancel = cancel
+    setattr(manager_type, "catalog", catalog)
+    setattr(manager_type, "_prune", prune)
+    setattr(manager_type, "snapshot", snapshot)
+    setattr(manager_type, "output_since", output_since)
+    setattr(manager_type, "_run", run)
+    setattr(manager_type, "cancel", cancel)
     setattr(manager_type, "_sentinel_runtime_hardened", True)

@@ -124,7 +124,7 @@ def _redact_json_value(value: Any, detected: dict[str, int], counters: dict[str,
         _merge(detected, result.detected)
         return result.text
     if isinstance(value, Path):
-        return str(value)
+        return value.as_posix()
     if value is None or isinstance(value, (bool, int, float)):
         return value
     result = redact_text(repr(value))

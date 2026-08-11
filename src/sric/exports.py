@@ -93,7 +93,11 @@ def export_graphml(nodes: Sequence[ExportNode], edges: Sequence[ExportEdge]) -> 
         ("edge_counter", "edge", "counter_evidence_ids"),
         ("edge_attributes", "edge", "attributes"),
     ):
-        SubElement(root, "key", id=key_id, **{"for": target, "attr.name": name, "attr.type": "string"})
+        SubElement(
+            root,
+            "key",
+            {"id": key_id, "for": target, "attr.name": name, "attr.type": "string"},
+        )
     graph = SubElement(root, "graph", id="G", edgedefault="directed")
     for node in sorted(nodes, key=lambda item: item.node_id):
         element = SubElement(graph, "node", id=node.node_id)
@@ -108,4 +112,5 @@ def export_graphml(nodes: Sequence[ExportNode], edges: Sequence[ExportEdge]) -> 
         SubElement(element, "data", key="edge_evidence").text = json.dumps(sorted(edge.evidence_ids), separators=(",", ":"))
         SubElement(element, "data", key="edge_counter").text = json.dumps(sorted(edge.counter_evidence_ids), separators=(",", ":"))
         SubElement(element, "data", key="edge_attributes").text = json.dumps(edge.attributes, sort_keys=True, separators=(",", ":"), ensure_ascii=False, default=str)
-    return tostring(root, encoding="utf-8", xml_declaration=True).decode("utf-8") + "\n"
+    encoded = tostring(root, encoding="utf-8", xml_declaration=True)
+    return bytes(encoded).decode("utf-8") + "\n"

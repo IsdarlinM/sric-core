@@ -34,10 +34,7 @@ class Workspace:
     root: Path
 
     @classmethod
-    def create(cls, root: Path, name: str) -> "Workspace":
-        _safe_name(name)
-        path = root / name
-        path.mkdir(parents=True, exist_ok=False)
+    def _bootstrap(cls, path: Path, name: str) -> "Workspace":
         for sub in (*SHARED_DIRS, *PRODUCT_NAMESPACES):
             (path / sub).mkdir()
         metadata = {
@@ -52,9 +49,30 @@ class Workspace:
             "products": {product: {"schema_version": "1"} for product in PRODUCT_NAMESPACES},
         }
         (path / "workspace.json").write_text(json.dumps(metadata, indent=2), encoding="utf-8")
-        db = Database(path / "workspace.db")
-        db.bootstrap()
+        Database(path / "workspace.db").bootstrap()
         return cls(path)
+
+    @classmethod
+    def create(cls, root: Path, name: str) -> "Workspace":
+        _safe_name(name)
+        path = root / name
+        path.mkdir(parents=True, exist_ok=False)
+        return cls._bootstrap(path, name)
+
+    @classmethod
+    def initialize(cls, path: Path, *, name: str | None = None) -> "Workspace":
+        """Open a workspace or initialize an existing empty directory safely."""
+
+        path = path.resolve()
+        if (path / "workspace.json").is_file():
+            return cls.open(path)
+        path.mkdir(parents=True, exist_ok=True)
+        if any(path.iterdir()):
+            raise FileNotFoundError(
+                "workspace.json not found and the target directory is not empty"
+            )
+        workspace_name = _safe_name(name or path.name)
+        return cls._bootstrap(path, workspace_name)
 
     @classmethod
     def open(cls, path: Path, *, migrate: bool = True) -> "Workspace":

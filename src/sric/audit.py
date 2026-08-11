@@ -24,7 +24,10 @@ class AuditLogger:
         tool_version: str,
         metadata: dict[str, Any] | None = None,
     ) -> None:
-        safe_target = redact_text(redact_url(target).text).text
+        # redact_url already handles every sensitive query key and preserves the
+        # key-specific placeholder. Passing its output through redact_text again
+        # would redact our own placeholder and lose useful audit metadata.
+        safe_target = redact_url(target).text
         safe_metadata, _ = redact_structure(metadata or {})
         event = {
             "timestamp": datetime.now(timezone.utc).isoformat(),

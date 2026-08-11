@@ -27,7 +27,7 @@ def append_path(existing: str, candidate: str) -> str:
 
 
 def ensure_windows_user_path(candidate: str) -> bool:
-    """Append candidate to HKCU\Environment\Path without setx truncation.
+    r"""Append candidate to HKCU\Environment\Path without setx truncation.
 
     Returns True when the registry value changed. Existing REG_SZ/REG_EXPAND_SZ
     type is preserved and a WM_SETTINGCHANGE broadcast informs Explorer/new shells.
@@ -49,7 +49,7 @@ def ensure_windows_user_path(candidate: str) -> bool:
             existing, value_type = "", winreg.REG_EXPAND_SZ
 
         updated = append_path(str(existing), candidate)
-        changed = updated != existing
+        changed = updated != str(existing)
         if changed:
             winreg.SetValueEx(key, "Path", 0, value_type, updated)
 

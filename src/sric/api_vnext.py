@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Annotated, Literal
+from typing import Annotated, Literal, Self
 
 from fastapi import APIRouter, FastAPI, HTTPException
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from .api import create_app as create_base_app
 from .bitemporal import BitemporalRecord, detect_temporal_conflicts, select_bitemporal
@@ -49,6 +49,14 @@ class BitemporalQueryRequest(BaseModel):
     known_at: datetime
     entity_id: str | None = None
     fact_type: str | None = None
+
+    @model_validator(mode="after")
+    def require_timezone_aware_query_times(self) -> Self:
+        for name in ("valid_at", "known_at"):
+            value = getattr(self, name)
+            if value.tzinfo is None or value.utcoffset() is None:
+                raise ValueError(f"{name} must be timezone-aware")
+        return self
 
 
 class SourceIndependenceRequest(BaseModel):

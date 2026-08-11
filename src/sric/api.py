@@ -16,13 +16,13 @@ from .jobs import JobEngine
 from .notebook import ResearchNotebook
 from .query import SecurityResearchGraphQuery
 from .web_catalog import install_json_safe_catalog
+from .workspace import Workspace
 
 # Install the hardened builder before Web Console/Workspace bind their command-catalog reference.
 install_json_safe_catalog()
 
 from .web_console import WebConsoleConfig, mount_web_console  # noqa: E402
 from .web_security_workspace import mount_security_workspace  # noqa: E402
-from .workspace import Workspace
 
 
 def create_app(workspace: Path | None = None) -> FastAPI:

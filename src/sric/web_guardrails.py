@@ -229,7 +229,7 @@ def _install_manager_guardrails() -> None:
             message = "Operation event stream unavailable: " + safe_exception_message(exc) + "\n"
             return [message], max(0, cursor), "failed"
 
-    manager_type.output_since = safe_output_since
+    setattr(manager_type, "output_since", safe_output_since)
     setattr(manager_type, "_sentinel_endpoint_guardrails", True)
 
 

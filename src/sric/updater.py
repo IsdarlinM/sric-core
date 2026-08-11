@@ -123,12 +123,18 @@ def _https_request(source: str) -> urllib.request.Request:
 
 def _read_source(source: str, *, max_bytes: int) -> bytes:
     parsed = urllib.parse.urlparse(source)
+    windows_drive_path = (
+        len(source) >= 3
+        and source[0].isalpha()
+        and source[1] == ":"
+        and source[2] in {"\\", "/"}
+    )
     if parsed.scheme in {"http"}:
         raise ValueError("insecure HTTP update sources are not allowed")
     if parsed.scheme == "https":
         with urllib.request.urlopen(_https_request(source), timeout=20) as response:  # noqa: S310
             data = bytes(response.read(max_bytes + 1))
-    elif parsed.scheme in {"", "file"}:
+    elif parsed.scheme in {"", "file"} or windows_drive_path:
         path = Path(urllib.request.url2pathname(parsed.path) if parsed.scheme == "file" else source)
         if path.stat().st_size > max_bytes:
             raise ValueError("update source exceeds size limit")

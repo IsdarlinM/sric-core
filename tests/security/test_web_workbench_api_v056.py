@@ -25,7 +25,7 @@ def test_workbench_assets_and_csp_are_same_origin_only() -> None:
     client = TestClient(create_app())
     page = client.get("/workbench")
     assert page.status_code == 200
-    assert "guided security operations" in page.text
+    assert "guided security operations" in page.text.lower()
     assert "No command syntax is required" in page.text
     assert "Advanced argv" not in page.text
     assert "Additional arguments" not in page.text

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import builtins
 from enum import StrEnum
 from pathlib import Path
 
@@ -55,7 +56,7 @@ class PluginRegistry:
         if not artifact.is_file() or artifact.is_symlink():raise ValueError("plugin artifact must be a regular non-symlink file")
         digest=hashlib.sha256(artifact.read_bytes()).hexdigest();expected=manifest.artifact_sha256
         return {"name":name,"sha256":digest,"expected_sha256":expected,"hash_valid":expected is not None and digest==expected,"signature_declared":bool(manifest.signature),"publisher":manifest.publisher,"execution_allowed":expected is not None and digest==expected and not self.is_disabled(name),"note":"Signature field is provenance metadata until a configured trust-root verifier validates it."}
-    def permission_diff(self,old:PluginManifest,new:PluginManifest)->dict[str,list[str]]:return {"added":sorted(x.value for x in new.permissions-old.permissions),"removed":sorted(x.value for x in old.permissions-new.permissions)}
+    def permission_diff(self,old:PluginManifest,new:PluginManifest)->dict[str,builtins.list[str]]:return {"added":sorted(x.value for x in new.permissions-old.permissions),"removed":sorted(x.value for x in old.permissions-new.permissions)}
     def assert_permission(self,manifest:PluginManifest,permission:PluginPermission)->None:
         if self.is_disabled(manifest.name):raise PermissionError(f"plugin {manifest.name} is disabled")
         if permission not in manifest.permissions:raise PermissionError(f"plugin {manifest.name} lacks declared permission: {permission}")

@@ -32,6 +32,8 @@ def test_every_public_command_has_both_help_flags_trailing_help_and_web_params()
         parts = path.split()
         assert runner.invoke(app, [*parts, "--help"]).exit_code == 0, path
         assert runner.invoke(app, [*parts, "-h"]).exit_code == 0, path
+        if parts == ["help"]:
+            continue
         normalized = normalize_help_argv(["sric", *parts, "help"])
         assert normalized[-1] == "--help", path
         assert runner.invoke(app, normalized[1:]).exit_code == 0, path

@@ -18,7 +18,7 @@ BRAND = CLIBrand(
 )
 
 _original_main = _base_cli.main
-app.rich_markup_mode = "rich"
+app.rich_markup_mode = None
 
 
 @app.callback(invoke_without_command=True)

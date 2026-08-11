@@ -34,7 +34,7 @@ class KeyringBackend:
         value = self._keyring.get_password(self.service, secret_id)
         if value is None:
             raise KeyError(secret_id)
-        return value
+        return str(value)
 
     def delete(self, secret_id: str) -> None:
         try:
@@ -53,6 +53,7 @@ class EncryptedFileBackend:
         root.mkdir(parents=True, exist_ok=True)
         self.path = root / "vault.enc"
         supplied = key or os.environ.get("SRIC_VAULT_KEY")
+        self.ephemeral_key: str | None
         if supplied is None:
             self._key = Fernet.generate_key()
             self.ephemeral_key = self._key.decode()
